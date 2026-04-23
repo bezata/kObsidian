@@ -7,12 +7,13 @@ import {
 import {
   addCanvasEdge,
   addCanvasNode,
+  createCanvas,
   getCanvasNodeConnections,
   parseCanvas,
   removeCanvasNode,
 } from "../../domain/canvas.js";
 import { createNoteFromTemplate, expandTemplate, listTemplates } from "../../domain/templates.js";
-import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
+import { canvasPathSchema, notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
 import {
   DESTRUCTIVE,
@@ -100,6 +101,18 @@ export const templateAndCanvasTools: ToolDefinition[] = [
     annotations: OPEN_WORLD,
     handler: (context, args) =>
       insertTemplaterTemplate(context, args as Parameters<typeof insertTemplaterTemplate>[1]),
+  },
+  {
+    name: "canvas.create",
+    title: "Create Canvas",
+    description: "Create a new empty Obsidian canvas (.canvas) file.",
+    inputSchema: z.object({
+      filePath: canvasPathSchema,
+      overwrite: z.boolean().optional(),
+      vaultPath: z.string().optional(),
+    }),
+    outputSchema: mutationResultSchema,
+    handler: (context, args) => createCanvas(context, args as Parameters<typeof createCanvas>[1]),
   },
   {
     name: "canvas.parse",

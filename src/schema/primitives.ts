@@ -13,6 +13,11 @@ export const notePathSchema = vaultRelativePathBase.refine(
   "Path must point to a markdown note",
 );
 
+export const canvasPathSchema = vaultRelativePathBase.refine(
+  (value) => value.endsWith(".canvas"),
+  "Path must point to a canvas file (.canvas)",
+);
+
 export const folderPathSchema = vaultRelativePathBase.optional();
 export const vaultPathSchema = z.string().min(1);
 export const tagSchema = z

@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-04-23
+
+### Fixed
+
+- **`dataview.query` / `dataview.listByTag` / `dataview.listByFolder` —
+  400 on LIST queries.** The Obsidian Local REST API `/search/`
+  endpoint only accepts DQL `TABLE` queries; `LIST`, `TASK`, and
+  `CALENDAR` are rejected with HTTP 400 regardless of `FROM` / `WHERE`
+  shape. `listNotesByTagDql` / `listNotesByFolderDql` now build
+  `TABLE file.name FROM …` instead of `LIST FROM …`, returning the
+  same per-note result set. The raw `dataview.query` validator was
+  narrowed from `/^(LIST|TABLE|TASK|CALENDAR)\b/` to `/^TABLE\b/` with
+  a clear error: *"Obsidian Local REST API /search/ only accepts DQL
+  TABLE queries. Use dataview.table, or rewrite LIST/TASK/CALENDAR
+  queries as TABLE."*
+- **`dataview.fields.remove` — missing `summary` tripped
+  `mutationResultSchema`.** Both the no-op branch (no matching field)
+  and the success branch now return a `summary` string, matching
+  `dataview.fields.add` and satisfying the Zod envelope on the server
+  tool's declared `outputSchema`.
+- **`workspace.closeActiveFile` — 404.** The command id was
+  `app:close-active-file`, which doesn't exist in Obsidian. Changed to
+  `workspace:close`.
+- **Transport-level flakiness on rapid bursts (e.g. `workspace.openFile`
+  right after `notes.create`).** `ObsidianApiClient` now retries once
+  (150 ms delay) on `fetch`-level throws — connection resets, TLS
+  aborts — while still surfacing `AbortError` timeouts and HTTP
+  4xx/5xx immediately without retry.
+- **Templater tools (`templates.renderTemplater`,
+  `templates.createNoteTemplater`, `templates.insertTemplater`) —
+  opaque 404 when the Templater plugin is absent.** 404 from
+  `/templater/execute/` or the Templater command id is now translated
+  to a clear `unavailable` error: *"Templater plugin is not installed
+  or enabled in this vault. Install 'Templater' from Community Plugins
+  to use this tool."*
+- **`templates.list` — `not_found` with no args when the default
+  `Templates/` folder doesn't exist.** With no explicit
+  `templateFolder`, the tool now returns an empty list. An
+  explicitly-passed-but-missing folder still throws `not_found`.
+
+### Added
+
+- **`canvas.create` tool.** Creates a new empty Obsidian canvas
+  (`.canvas`) file. Refuses an existing file unless `overwrite: true`.
+  `notes.create` still rejects non-markdown paths (it uses
+  `notePathSchema`); the new tool uses a dedicated `canvasPathSchema`
+  that refines on `.canvas`.
+
+### Changed
+
+- **`ObsidianApiClient` error messages now include a ≤2 KB snippet of
+  the response body on non-2xx.** Previously the error was just
+  `Obsidian API request failed: 400 /search/` with no context. Now the
+  server's actual complaint is appended, which is what surfaced the
+  DQL-`TABLE`-only limitation above.
+
 ## [0.2.0] — 2026-04-23
 
 ### Fixed

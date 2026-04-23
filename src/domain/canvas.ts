@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { promises as fs } from "node:fs";
+import path from "node:path";
 import { AppError } from "../lib/errors.js";
-import { fileExists, readUtf8, writeUtf8 } from "../lib/filesystem.js";
+import { ensureDir, fileExists, readUtf8, writeUtf8 } from "../lib/filesystem.js";
 import { resolveVaultPath } from "../lib/paths.js";
 import { type DomainContext, requireVaultPath } from "./context.js";
 
@@ -24,6 +24,24 @@ async function loadCanvas(filePath: string): Promise<CanvasDocument> {
 
 async function saveCanvas(filePath: string, canvas: CanvasDocument): Promise<void> {
   await writeUtf8(filePath, `${JSON.stringify(canvas, null, 2)}\n`);
+}
+
+export async function createCanvas(
+  context: DomainContext,
+  args: { filePath: string; overwrite?: boolean; vaultPath?: string },
+) {
+  const vaultRoot = requireVaultPath(context, args.vaultPath);
+  const absolutePath = resolveVaultPath(vaultRoot, args.filePath);
+  if (!args.overwrite && (await fileExists(absolutePath))) {
+    throw new AppError("conflict", `Canvas already exists: ${args.filePath}`);
+  }
+  await ensureDir(path.dirname(absolutePath));
+  await saveCanvas(absolutePath, { nodes: [], edges: [] });
+  return {
+    changed: true,
+    target: args.filePath,
+    summary: `Created canvas ${args.filePath}`,
+  };
 }
 
 export async function parseCanvas(

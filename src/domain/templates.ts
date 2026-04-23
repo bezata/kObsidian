@@ -83,9 +83,13 @@ export async function listTemplates(
   args: { templateFolder?: string; vaultPath?: string },
 ) {
   const vaultRoot = requireVaultPath(context, args.vaultPath);
+  const folderExplicit = args.templateFolder !== undefined;
   const folder = args.templateFolder ?? "Templates";
   const absoluteFolder = resolveVaultPath(vaultRoot, folder);
   if (!(await fileExists(absoluteFolder))) {
+    if (!folderExplicit) {
+      return { templateFolder: folder, items: [], total: 0 };
+    }
     throw new AppError("not_found", `Template folder not found: ${folder}`);
   }
 
