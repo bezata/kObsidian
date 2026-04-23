@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-04-23
+
+Release-body + badge work. No source or tool-surface changes; this
+release exists to exercise the full CI pipeline with the VT verdict
+table and live badge now on `main`.
+
+### Added
+
+- **Per-file VirusTotal verdicts in the release body** — every
+  `.mcpb` bundle now shows as a row in a markdown table with
+  verdict (✅ Clean / ⚠ N malicious / ⚠ N suspicious), engines
+  clean / total, a link to the permanent
+  `https://www.virustotal.com/gui/file/<sha256>` report, and the
+  truncated SHA-256. Full SHA-256 list in a collapsible
+  `<details>` block for byte-level verification.
+- **Hard gate**: the workflow fails (`exit 1`) if any bundle has
+  `malicious > 0`, blocking `npm-publish` (which `needs: [virustotal]`).
+- **Live VirusTotal shields.io endpoint badge** —
+  `.github/badges/virustotal.json` is updated by CI after every
+  release via the GitHub Contents API. Badge flips between
+  `clean · N/N bundles · vX.Y.Z`, `suspicious ⚠`, and
+  `malicious detection ⚠` with matching colors. Clicking opens the
+  latest release with the full verdict table.
+
+### Changed
+
+- **README badges** — dropped the premature `npm downloads` badge
+  (the package was brand-new) and added a GitHub-release version
+  badge alongside npm-version for quick release discovery.
+- **`CI` label** on the Actions workflow badge (was `release`) to
+  disambiguate from the new GitHub-release badge.
+
+### Fixed
+
+- **Release-body VT links were temporary** — the VT action emitted
+  `/gui/file-analysis/<id>/detection` URLs that 404 with "The page
+  you navigated to does not exist" once analysis completes. All
+  links now point at the permanent hash-based report page.
+- **`update_release_body: true` was a silent no-op on `push: tags`
+  triggers** — the action only fires on `release: published`. Now
+  bypassed by writing the body ourselves via `gh release edit
+  --notes-file`.
+
 ## [0.1.1] — 2026-04-23
 
 CI pipeline hardening + action upgrades. No source or tool-surface
@@ -37,7 +80,8 @@ attached to the release body, npm Trusted Publishing) end-to-end.
   probes `npm view kobsidian-mcp@<version>` first and exits cleanly
   if the version already exists on npm.
 
-[Unreleased]: https://github.com/bezata/kObsidian/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/bezata/kObsidian/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/bezata/kObsidian/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/bezata/kObsidian/compare/v0.1.0...v0.1.1
 
 ## [0.1.0] — 2026-04-23

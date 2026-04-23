@@ -2,7 +2,7 @@
   "$schema": "https://modelcontextprotocol.io/schemas/registry/v1/server.schema.json",
   "name": "io.github.bezata/kobsidian-mcp",
   "description": "Filesystem-first MCP server for Obsidian vaults with an LLM-Wiki layer (notes, links, tags, tasks, Dataview, Canvas, Kanban, Mermaid, Marp, Templates, workspace commands, and wiki.* orchestration).",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "repository": {
     "url": "https://github.com/bezata/kObsidian",
     "source": "github"
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "kobsidian-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": {
         "type": "stdio",
         "command": "kobsidian-mcp"
