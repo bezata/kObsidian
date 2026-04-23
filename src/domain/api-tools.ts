@@ -1,5 +1,19 @@
-import { AppError } from "../lib/errors.js";
+import { AppError, isAppError } from "../lib/errors.js";
 import { type DomainContext, requireApiConfigured } from "./context.js";
+
+const TEMPLATER_MISSING_MESSAGE =
+  "Templater plugin is not installed or enabled in this vault. Install 'Templater' from Community Plugins to use this tool.";
+
+async function callTemplater<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (isAppError(error) && error.code === "not_found") {
+      throw new AppError("unavailable", TEMPLATER_MISSING_MESSAGE, { cause: error });
+    }
+    throw error;
+  }
+}
 
 async function apiJson<T>(
   context: DomainContext,
@@ -28,8 +42,12 @@ function normalizeCommandsResponse(result: unknown): Array<Record<string, unknow
 }
 
 export async function executeDataviewQuery(context: DomainContext, args: { query: string }) {
-  if (!/^(LIST|TABLE|TASK|CALENDAR)\b/i.test(args.query.trim())) {
-    throw new AppError("invalid_argument", `Invalid DQL query: ${args.query}`);
+  const trimmed = args.query.trim();
+  if (!/^TABLE\b/i.test(trimmed)) {
+    throw new AppError(
+      "invalid_argument",
+      "Obsidian Local REST API /search/ only accepts DQL TABLE queries. Use dataview.table, or rewrite LIST/TASK/CALENDAR queries as TABLE.",
+    );
   }
   const api = requireApiConfigured(context);
   const result = await api.request<unknown>("/search/", {
@@ -37,9 +55,9 @@ export async function executeDataviewQuery(context: DomainContext, args: { query
     headers: {
       "Content-Type": "application/vnd.olrapi.dataview.dql+txt",
     },
-    body: args.query,
+    body: trimmed,
   });
-  return { query: args.query, results: result };
+  return { query: trimmed, results: result };
 }
 
 export async function listNotesByTagDql(
@@ -48,7 +66,7 @@ export async function listNotesByTagDql(
 ) {
   const tag = args.tag.startsWith("#") ? args.tag : `#${args.tag}`;
   const query = [
-    "LIST",
+    "TABLE file.name",
     `FROM ${tag}`,
     args.whereClause ? `WHERE ${args.whereClause}` : "",
     args.sortBy ? `SORT ${args.sortBy}` : "",
@@ -64,7 +82,7 @@ export async function listNotesByFolderDql(
   args: { folder: string; whereClause?: string; sortBy?: string; limit?: number },
 ) {
   const query = [
-    "LIST",
+    "TABLE file.name",
     `FROM "${args.folder}"`,
     args.whereClause ? `WHERE ${args.whereClause}` : "",
     args.sortBy ? `SORT ${args.sortBy}` : "",
@@ -104,49 +122,59 @@ export async function renderTemplaterTemplate(
   context: DomainContext,
   args: { templateFile: string; targetFile?: string },
 ) {
-  const result = await apiJson<unknown>(context, "/templater/execute/", {
-    method: "POST",
-    body: JSON.stringify({
-      templatePath: args.templateFile,
-      targetPath: args.targetFile ?? args.templateFile,
-    }),
+  return callTemplater(async () => {
+    const result = await apiJson<unknown>(context, "/templater/execute/", {
+      method: "POST",
+      body: JSON.stringify({
+        templatePath: args.templateFile,
+        targetPath: args.targetFile ?? args.templateFile,
+      }),
+    });
+    return {
+      templateFile: args.templateFile,
+      targetFile: args.targetFile,
+      renderedContent: result,
+    };
   });
-  return { templateFile: args.templateFile, targetFile: args.targetFile, renderedContent: result };
 }
 
 export async function createNoteFromTemplater(
   context: DomainContext,
   args: { templateFile: string; targetFile: string; openFile?: boolean },
 ) {
-  const result = await apiJson<unknown>(context, "/templater/execute/", {
-    method: "POST",
-    body: JSON.stringify({
-      templatePath: args.templateFile,
-      targetPath: args.targetFile,
-      open: args.openFile ?? false,
-    }),
+  return callTemplater(async () => {
+    const result = await apiJson<unknown>(context, "/templater/execute/", {
+      method: "POST",
+      body: JSON.stringify({
+        templatePath: args.templateFile,
+        targetPath: args.targetFile,
+        open: args.openFile ?? false,
+      }),
+    });
+    return {
+      templateFile: args.templateFile,
+      targetFile: args.targetFile,
+      openFile: args.openFile ?? false,
+      result,
+    };
   });
-  return {
-    templateFile: args.templateFile,
-    targetFile: args.targetFile,
-    openFile: args.openFile ?? false,
-    result,
-  };
 }
 
 export async function insertTemplaterTemplate(
   context: DomainContext,
   args: { templateFile: string; activeFile?: boolean },
 ) {
-  const commandResult = await executeCommand(context, {
-    commandId: "templater-obsidian:insert-templater",
-    args: { template: args.templateFile, active: args.activeFile ?? true },
+  return callTemplater(async () => {
+    const commandResult = await executeCommand(context, {
+      commandId: "templater-obsidian:insert-templater",
+      args: { template: args.templateFile, active: args.activeFile ?? true },
+    });
+    return {
+      templateFile: args.templateFile,
+      activeFile: args.activeFile ?? true,
+      result: commandResult.result,
+    };
   });
-  return {
-    templateFile: args.templateFile,
-    activeFile: args.activeFile ?? true,
-    result: commandResult.result,
-  };
 }
 
 export async function getActiveFile(context: DomainContext) {
@@ -203,7 +231,7 @@ export async function searchCommands(context: DomainContext, args: { query: stri
 }
 
 export async function closeActiveFile(context: DomainContext) {
-  return executeCommand(context, { commandId: "app:close-active-file" });
+  return executeCommand(context, { commandId: "workspace:close" });
 }
 
 export async function navigateBack(context: DomainContext) {

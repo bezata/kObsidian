@@ -479,7 +479,13 @@ export async function removeDataviewField(
     fields = fields.filter((field) => field.scope === args.scope);
   }
   if (fields.length === 0) {
-    return { changed: false, target: args.filePath, removedKey: args.key, removedCount: 0 };
+    return {
+      changed: false,
+      target: args.filePath,
+      summary: `No Dataview field named ${args.key} found in ${args.filePath}`,
+      removedKey: args.key,
+      removedCount: 0,
+    };
   }
 
   let nextContent = content;
@@ -501,6 +507,7 @@ export async function removeDataviewField(
   return {
     changed: true,
     target: args.filePath,
+    summary: `Removed ${fields.length} Dataview field(s) named ${args.key} from ${args.filePath}`,
     removedKey: args.key,
     removedCount: fields.length,
   };
