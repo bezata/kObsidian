@@ -41,6 +41,8 @@ Thumbs.db
 *Test*Report*.md
 *SECURITY*.md
 *API*Test*.md
+!SECURITY.md
+!docs/SECURITY.md
 
 # Wrapper scripts with hardcoded credentials
 run-mcp-with-env.sh

@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **VirusTotal scan on release** — every `.mcpb` bundle attached to a
+  GitHub release is scanned by
+  [`crazy-max/ghaction-virustotal@v4`](https://github.com/crazy-max/ghaction-virustotal)
+  and the analysis links are appended to the release body. Needs the
+  `VT_API_KEY` secret set on the repo.
+- **Restructured `docs/` directory** with an index
+  ([`docs/README.md`](docs/README.md)) and five new guides:
+  [`architecture.md`](docs/architecture.md),
+  [`wiki.md`](docs/wiki.md),
+  [`tools.md`](docs/tools.md),
+  [`SECURITY.md`](docs/SECURITY.md), plus the moved-in
+  [`TESTING.md`](docs/TESTING.md),
+  [`ENVIRONMENT.md`](docs/ENVIRONMENT.md) (was `TEST_ENV_VARS.md`), and
+  [`MIGRATION.md`](docs/MIGRATION.md).
+- **README rewrite** with real badges (npm version / downloads / license
+  / CI status / MCP protocol / Bun / TS / tool count / Smithery /
+  Registry / VirusTotal), an ASCII architecture diagram, an LLM-Wiki
+  loop diagram, install tabs for every channel, and a full env-var
+  reference table.
+
+### Changed
+
+- **Docs moved out of root**: `MIGRATION.md`, `TESTING.md`,
+  `TEST_ENV_VARS.md` now live under `docs/` (the last renamed to
+  `ENVIRONMENT.md`).
+- **`CLAUDE.md` collapsed to a 3-line pointer** to `AGENTS.md` (2026
+  vendor-neutral convention) so there's one source of truth for agent
+  conventions.
+- **Stale `.claude/skills/` reference in `AGENTS.md`** updated to
+  `skills/` (moved at repo root in an earlier slice).
+- **Release workflow bumped to Node-24-compatible actions**:
+  `actions/checkout@v5`, `actions/upload-artifact@v5`,
+  `actions/download-artifact@v5`, `actions/setup-node@v5` (Node 24).
+  Added `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"` at the workflow
+  level as a safety net for any remaining Node-20-bundled actions
+  ahead of GitHub's 2026-06-02 default flip.
+
 ## [3.1.0] — 2026-04-23
 
 MCP compliance polish, LLM-Wiki layer, and a proper distribution story

@@ -14,6 +14,11 @@ on:
 permissions:
   contents: write
 
+env:
+  # Force any remaining Node-20-bundled JavaScript actions onto the
+  # Node 24 runtime that GitHub will default to on 2026-06-02.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build-bundles:
     name: Build mcpb bundles + compiled binaries
@@ -37,7 +42,7 @@ jobs:
             bun_target: bun-windows-x64
             binary_name: kobsidian.exe
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -52,7 +57,7 @@ jobs:
           KOBSIDIAN_BUNDLE_PLATFORM: ${{ matrix.platform }}
           KOBSIDIAN_BUNDLE_OUTPUT: release/kobsidian-${{ matrix.platform }}.mcpb
         run: bun run scripts/make-mcpb.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: kobsidian-${{ matrix.platform }}
           path: |
@@ -66,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: artifacts
       - name: Create GitHub release
@@ -76,6 +81,24 @@ jobs:
           files: |
             artifacts/**/*.mcpb
 
+  virustotal:
+    name: VirusTotal scan release assets
+    needs: publish-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Scan .mcpb bundles
+        uses: crazy-max/ghaction-virustotal@v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          update_release_body: true
+          request_rate: 4
+          files: |
+            \.mcpb$
+
   npm-publish:
     name: Publish to npm
     needs: build-bundles
@@ -84,10 +107,10 @@ jobs:
       startsWith(github.ref, 'refs/tags/v') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_npm == 'true')
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - uses: oven-sh/setup-bun@v2
         with:
