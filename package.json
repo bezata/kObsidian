@@ -1,6 +1,6 @@
 {
   "name": "kobsidian",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "TypeScript MCP server for Obsidian with a filesystem-first LLM Wiki layer, Dataview / Canvas / Kanban / Mermaid / Marp / Templates tools, and both stdio and Streamable HTTP transports.",
   "type": "module",
   "mcpName": "io.github.behzatcan/kobsidian",
@@ -38,7 +38,7 @@
     "kobsidian": "./dist/server/stdio.js",
     "kobsidian-http": "./dist/server/http.js"
   },
-  "files": ["dist/**", "manifest.json", "server.json", "README.md", "LICENSE"],
+  "files": ["dist/**", "manifest.json", "server.json", "README.md", "LICENSE", "CHANGELOG.md"],
   "publishConfig": {
     "access": "public"
   },
