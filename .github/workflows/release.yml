@@ -112,8 +112,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           update_release_body: true
           request_rate: 4
+          # The action's `files:` input is passed to `glob.sync()` —
+          # it's a glob, not a regex. README examples like `.exe$` are
+          # misleading; the `$` is literal in glob. Use a real glob.
           files: |
-            release/.*\.mcpb$
+            release/*.mcpb
 
   npm-publish:
     name: Publish to npm
