@@ -173,32 +173,36 @@ jobs:
             name=$(basename "$file")
             report_url="https://www.virustotal.com/gui/file/${sha}"
 
-            # Poll /files/<sha256> until we see completed analysis stats.
-            # First scan can take 1-5 min; total wait cap ≈ 5 min.
-            stats=""
-            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            # Poll /files/<sha256> until real engine counts arrive.
+            # `last_analysis_stats` can come back as
+            # {"malicious":0,"suspicious":0,"undetected":0,...} while the
+            # scan is still queued — that's non-null but total == 0.
+            # Only break when total engines > 0, indicating analysis ran.
+            # Bundle scans (large binaries) routinely take 5-15 min.
+            malicious=0; suspicious=0; undetected=0; harmless=0; timeout_count=0; total=0
+            for attempt in $(seq 1 30); do
               resp=$(curl -sf -H "x-apikey: ${VT_API_KEY}" \
                 "https://www.virustotal.com/api/v3/files/${sha}" || true)
-              stats=$(printf '%s' "$resp" | jq -c '.data.attributes.last_analysis_stats // empty' 2>/dev/null || echo "")
-              if [ -n "$stats" ] && [ "$stats" != "null" ]; then
-                break
+              if [ -n "$resp" ]; then
+                malicious=$(printf '%s' "$resp" | jq -r '.data.attributes.last_analysis_stats.malicious // 0' 2>/dev/null || echo 0)
+                suspicious=$(printf '%s' "$resp" | jq -r '.data.attributes.last_analysis_stats.suspicious // 0' 2>/dev/null || echo 0)
+                undetected=$(printf '%s' "$resp" | jq -r '.data.attributes.last_analysis_stats.undetected // 0' 2>/dev/null || echo 0)
+                harmless=$(printf '%s' "$resp" | jq -r '.data.attributes.last_analysis_stats.harmless // 0' 2>/dev/null || echo 0)
+                timeout_count=$(printf '%s' "$resp" | jq -r '.data.attributes.last_analysis_stats.timeout // 0' 2>/dev/null || echo 0)
+                total=$((malicious + suspicious + undetected + harmless + timeout_count))
+                if [ "$total" -gt 0 ]; then
+                  break
+                fi
               fi
-              echo "[${name}] waiting for VT analysis (attempt ${attempt}/10) …"
-              sleep 30
+              echo "[${name}] VT analysis pending (attempt ${attempt}/30, sleep 20s) …"
+              sleep 20
             done
 
-            if [ -z "$stats" ] || [ "$stats" = "null" ]; then
+            if [ "$total" -eq 0 ]; then
               verdict="⏳ Pending"
-              engines="—"
-              echo "::warning::VT analysis for ${name} not yet available; release body shows 'Pending'."
+              engines="pending"
+              echo "::warning::VT analysis for ${name} not completed within poll budget; release body shows 'Pending'."
             else
-              malicious=$(printf '%s' "$stats" | jq -r '.malicious // 0')
-              suspicious=$(printf '%s' "$stats" | jq -r '.suspicious // 0')
-              undetected=$(printf '%s' "$stats" | jq -r '.undetected // 0')
-              harmless=$(printf '%s' "$stats" | jq -r '.harmless // 0')
-              timeout=$(printf '%s' "$stats" | jq -r '.timeout // 0')
-              total=$((malicious + suspicious + undetected + harmless + timeout))
-
               if [ "$malicious" -gt 0 ]; then
                 verdict="⚠️ **${malicious} malicious**"
                 any_malicious=1
@@ -209,11 +213,11 @@ jobs:
                 verdict="✅ Clean"
               fi
               clean=$((undetected + harmless))
-              engines="${clean}/${total}"
+              engines="${clean}/${total} clean"
             fi
 
             short_sha="${sha:0:12}…"
-            echo "| [\`${name}\`](${report_url}) | ${verdict} | ${engines} clean | \`${short_sha}\` |" \
+            echo "| [\`${name}\`](${report_url}) | ${verdict} | ${engines} | \`${short_sha}\` |" \
               >> /tmp/vt-block.md
           done
 
@@ -234,10 +238,13 @@ jobs:
           cat /tmp/vt-block.md
 
           # Preserve existing body (if any) and append.
-          gh release view "$RELEASE_TAG" --json body --jq '.body' \
-            > /tmp/body-current.md 2>/dev/null || true
+          # `--repo` is required — this job has no checkout, so gh
+          # can't auto-detect the owner/repo from a git directory.
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json body --jq '.body' > /tmp/body-current.md 2>/dev/null || true
           cat /tmp/body-current.md /tmp/vt-block.md > /tmp/body-final.md
-          gh release edit "$RELEASE_TAG" --notes-file /tmp/body-final.md
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --notes-file /tmp/body-final.md
           echo "Release body updated."
 
           # Export flags for the badge-update step.
