@@ -1,6 +1,6 @@
 <div align="center">
 
-# kObsidian
+# kObsidian MCP
 
 **Filesystem-first MCP server for Obsidian vaults — with an LLM-Wiki layer on top.**
 
