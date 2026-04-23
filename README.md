@@ -35,8 +35,58 @@ docs/
 
 ## Install
 
+Pick the channel that matches how you use MCP. All three read the same
+`OBSIDIAN_VAULT_PATH`, `OBSIDIAN_API_URL`, and `OBSIDIAN_REST_API_KEY`
+environment variables.
+
+### npx / bunx (Claude Code, Cursor, VSCode, Windsurf, Zed, Cline…)
+
+Once published to npm:
+
+```json
+{
+  "mcpServers": {
+    "kobsidian": {
+      "command": "npx",
+      "args": ["-y", "kobsidian"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
+        "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_REST_API_KEY": "optional-if-you-use-workspace-or-commands-tools"
+      }
+    }
+  }
+}
+```
+
+(Use `bunx` instead of `npx` for faster cold-start.)
+
+### Claude Desktop (.mcpb drag-and-drop)
+
+Download `kobsidian-<platform>.mcpb` from the
+[latest release](https://github.com/behzatcan/kObsidian/releases/latest)
+and drag it into Claude Desktop. The installer prompts for vault path +
+optional API URL / key.
+
+Build one locally with:
+
 ```bash
 bun install
+bun run build:compile   # produces dist/kobsidian (or .exe on Windows)
+bun run bundle:mcpb     # produces kobsidian.mcpb
+```
+
+### Smithery
+
+Install from [smithery.ai](https://smithery.ai) — the catalog form fills
+the three env vars for you. `smithery.yaml` at repo root is the source
+of truth.
+
+### From source (dev / contributing)
+
+```bash
+bun install
+bun run dev:stdio       # or dev:http
 ```
 
 ## Run

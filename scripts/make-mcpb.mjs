@@ -1,14 +1,15 @@
 #!/usr/bin/env node
-import { promises as fs } from "node:fs";
-import path from "node:path";
 /**
  * Build a `.mcpb` bundle (ZIP with STORE compression) containing the
  * manifest and the compiled kobsidian binary. No external deps; uses
  * Node's built-in zlib.crc32 and a minimal ZIP writer.
  */
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { crc32 } from "node:zlib";
 
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function u16(value) {
   const buffer = Buffer.alloc(2);
@@ -114,15 +115,22 @@ function buildZipStore(entries) {
 
 async function main() {
   const manifestPath = path.join(REPO_ROOT, "manifest.json");
-  const binaryPath = path.join(
-    REPO_ROOT,
-    "dist",
-    process.platform === "win32" ? "kobsidian.exe" : "kobsidian",
-  );
-  const outputPath = path.join(REPO_ROOT, "kobsidian.mcpb");
+  const binaryDefault = process.platform === "win32" ? "dist/kobsidian.exe" : "dist/kobsidian";
+  const binaryRelative = process.env.KOBSIDIAN_BUNDLE_BINARY ?? binaryDefault;
+  const binaryPath = path.isAbsolute(binaryRelative)
+    ? binaryRelative
+    : path.join(REPO_ROOT, binaryRelative);
+  const platformSuffix = process.env.KOBSIDIAN_BUNDLE_PLATFORM
+    ? `-${process.env.KOBSIDIAN_BUNDLE_PLATFORM}`
+    : "";
+  const outputRelative = process.env.KOBSIDIAN_BUNDLE_OUTPUT ?? `kobsidian${platformSuffix}.mcpb`;
+  const outputPath = path.isAbsolute(outputRelative)
+    ? outputRelative
+    : path.join(REPO_ROOT, outputRelative);
 
   const entries = await collectFiles(manifestPath, binaryPath);
   const zip = buildZipStore(entries);
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, zip);
   console.log(
     `[make-mcpb] wrote ${outputPath} (${zip.length.toLocaleString()} bytes, ${entries.length} entries)`,

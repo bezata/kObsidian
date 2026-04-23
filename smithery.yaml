@@ -1,0 +1,32 @@
+version: 1
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - obsidianVaultPath
+    properties:
+      obsidianVaultPath:
+        type: string
+        title: Obsidian vault path
+        description: Absolute path on the host to the Obsidian vault kObsidian should operate on.
+      obsidianApiUrl:
+        type: string
+        title: Obsidian Local REST API URL
+        description: Base URL of the Obsidian Local REST API plugin. Only required for workspace.* and commands.* tools.
+        default: https://127.0.0.1:27124
+      obsidianRestApiKey:
+        type: string
+        title: Obsidian Local REST API key
+        description: Bearer key for the Obsidian Local REST API plugin. Required only if you use workspace.* or commands.* tools.
+        format: password
+  commandFunction: |
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'kobsidian'],
+      env: {
+        OBSIDIAN_VAULT_PATH: config.obsidianVaultPath,
+        ...(config.obsidianApiUrl ? { OBSIDIAN_API_URL: config.obsidianApiUrl } : {}),
+        ...(config.obsidianRestApiKey ? { OBSIDIAN_REST_API_KEY: config.obsidianRestApiKey } : {}),
+      },
+    })
