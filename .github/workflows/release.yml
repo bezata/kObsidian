@@ -132,6 +132,37 @@ jobs:
           fi
           echo "VirusTotal analysis: $VT_ANALYSIS"
 
+      - name: Append VirusTotal links to release body
+        # `update_release_body: true` on the VT action only fires when
+        # the workflow is triggered by `release: published`; on a
+        # `push: tags` trigger it silently skips. We're on tag push, so
+        # we append the links ourselves via the gh CLI using the
+        # `analysis` output (format: `path1=url1,path2=url2,…`).
+        env:
+          VT_ANALYSIS: ${{ steps.vt.outputs.analysis }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node <<'EOF' > /tmp/vt-block.md
+          const raw = process.env.VT_ANALYSIS || '';
+          const pairs = raw.split(',').map(p => p.trim()).filter(Boolean);
+          const lines = ['', '', '🛡 **VirusTotal analysis**', ''];
+          for (const pair of pairs) {
+            const eq = pair.indexOf('=');
+            if (eq < 0) continue;
+            const file = pair.slice(0, eq);
+            const url = pair.slice(eq + 1);
+            const name = file.split('/').pop();
+            lines.push(`- [\`${name}\`](${url})`);
+          }
+          process.stdout.write(lines.join('\n') + '\n');
+          EOF
+          # Preserve existing body (if any) and append our VT block.
+          gh release view "$RELEASE_TAG" --json body --jq '.body' > /tmp/body-current.md || true
+          cat /tmp/body-current.md /tmp/vt-block.md > /tmp/body-final.md
+          gh release edit "$RELEASE_TAG" --notes-file /tmp/body-final.md
+          echo "Release body updated with $(wc -l < /tmp/vt-block.md) lines of VT links."
+
   npm-publish:
     name: Publish to npm
     # Wait for virustotal (on tag push) so we only publish after the
