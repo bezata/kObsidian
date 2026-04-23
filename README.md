@@ -106,10 +106,78 @@ bun run dev:stdio    # or dev:http
 
 ---
 
+## Obsidian plugins
+
+kObsidian is **filesystem-first** — 80+ of the 90 tools work against a
+bare vault directory with no Obsidian plugins installed. The plugins
+below only matter if you want the specific tool namespaces that depend
+on them.
+
+### Enabling community plugins (one-time, if not already on)
+
+Obsidian ships with community plugins disabled by default. Enable them
+once per vault:
+
+1. Open your vault in Obsidian.
+2. **Settings** (⚙️, bottom-left) → **Community plugins**.
+3. Click **Turn on community plugins**.
+4. **Browse** → search → **Install** → **Enable**.
+
+### Required for the REST-bridged tools
+
+**[Obsidian Local REST API](obsidian://show-plugin?id=obsidian-local-rest-api)** (by Adam Coddington) — needed for:
+- `workspace.*` (activeFile, openFile, navigateBack/Forward, toggleEditMode)
+- `commands.*` (execute, list, search)
+- `dataview.query` / `dataview.listByTag` / `dataview.listByFolder` / `dataview.table` (runtime DQL — the offline `dataview.fields.*` / `dataview.index.read` / `dataview.query.read` tools work without it)
+- `templates.renderTemplater` / `templates.createNoteTemplater` / `templates.insertTemplater`
+
+**Setup after install:**
+
+1. Enable the plugin.
+2. Open its settings — scroll to **API key** → click **Copy** (or **Reset** first if you want a fresh one).
+3. Paste that key as `OBSIDIAN_REST_API_KEY` in your MCP client config's `env:` block. The `OBSIDIAN_API_URL` default (`https://127.0.0.1:27124`) works out of the box.
+
+Leave the plugin running while you use the REST-bridged tools — the endpoint is local-only (`127.0.0.1`) so nothing leaves your machine.
+
+### Enhances (but not required for) specific tool namespaces
+
+| Plugin | Link | What it unlocks |
+|---|---|---|
+| **[Dataview](obsidian://show-plugin?id=dataview)** | `id=dataview` | All `dataview.*` tools still work on the raw markdown; Dataview plugin is what makes DQL queries in `dataview.query*` actually execute. Also renders your fields + queries visually inside Obsidian. |
+| **[Templater](obsidian://show-plugin?id=templater-obsidian)** | `id=templater-obsidian` | Runtime template rendering via the REST API (`templates.renderTemplater`, etc.). The offline `templates.expand` / `templates.list` / `templates.createNote` work without it. |
+| **[Marp](obsidian://show-plugin?id=marp-slides)** | `id=marp-slides` | Marp `marp.*` tools parse + edit Marp-front-matter markdown even without the plugin; the plugin is what renders slides / exports to PDF inside Obsidian. |
+| **[Kanban](obsidian://show-plugin?id=obsidian-kanban)** | `id=obsidian-kanban` | `kanban.*` tools read/write the plain markdown board format regardless of plugin; the plugin is what renders the board as draggable columns inside Obsidian. |
+| **[Tasks](obsidian://show-plugin?id=obsidian-tasks-plugin)** | `id=obsidian-tasks-plugin` | `tasks.*` tools understand the Tasks-plugin emoji syntax (📅 ⏳ 🛫 ✅ 🔼 🔁) regardless of plugin; the plugin is what provides filtering / querying / toggling inside Obsidian. |
+
+> The `obsidian://show-plugin?id=…` links jump straight to the plugin
+> in Obsidian's in-app browser — click one with Obsidian open and it
+> deep-links to the install screen.
+
+### TLDR
+
+| You want to … | Minimum you need |
+|---|---|
+| Use `notes.*` / `tags.*` / `links.*` / `stats.*` / `tasks.*` / `wiki.*` / `kanban.*` / `mermaid.*` / `marp.*` / `canvas.*` / `templates.expand` + `list` + `createNote` / offline `dataview.*` | **Just a vault path.** No plugins required. |
+| Use `workspace.*` / `commands.*` | + **Local REST API** plugin + API key env var |
+| Run live DQL queries (`dataview.query` / `dataview.listBy*` / `dataview.table`) | + **Local REST API** + **Dataview** |
+| Run Templater templates at runtime | + **Local REST API** + **Templater** |
+
+No combination of plugins makes kObsidian depend on Obsidian being
+running — the REST-bridged tools just return a clear error if the
+plugin isn't reachable, and the filesystem-first tools keep working.
+
+---
+
 ## Quick start
 
-> Once installed, a typical session opens with three natural-language
-> prompts. The `wiki.*` tools + the `.claude` skills handle the rest.
+> **Before the first session** — kObsidian works on a bare Obsidian vault,
+> but enabling a few Obsidian plugins unlocks the full tool surface.
+> See [Obsidian plugins](#obsidian-plugins) below for the 5-minute
+> setup (Local REST API, Dataview, Templater, Marp, Kanban, Tasks).
+> Skip it if you only need the 80+ filesystem-first tools.
+
+Once installed, a typical session opens with three natural-language
+prompts. The `wiki.*` tools + the `.claude` skills handle the rest.
 
 ```
 You:  "Set up a wiki in this vault."
