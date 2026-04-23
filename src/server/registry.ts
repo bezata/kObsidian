@@ -7,6 +7,7 @@ import { linkTools } from "./tools/links.js";
 import { marpTools } from "./tools/marp.js";
 import { mermaidTools } from "./tools/mermaid.js";
 import { noteTools } from "./tools/notes.js";
+import { systemTools } from "./tools/system.js";
 import { tagTools } from "./tools/tags.js";
 import { taskTools } from "./tools/tasks.js";
 import { templateAndCanvasTools } from "./tools/templates-canvas.js";
@@ -25,4 +26,5 @@ export const toolRegistry: ToolDefinition[] = [
   ...templateAndCanvasTools,
   ...apiTools,
   ...wikiTools,
+  ...systemTools,
 ];
