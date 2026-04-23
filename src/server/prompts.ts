@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { proposedEditOperationSchema } from "../schema/wiki.js";
 
 function textMessage(role: "user" | "assistant", text: string) {
   return {
@@ -43,12 +44,13 @@ export function registerWikiPrompts(server: McpServer): void {
       if (args.relatedConcepts) parts.push(`- relatedConcepts: ${args.relatedConcepts}`);
       if (args.relatedEntities) parts.push(`- relatedEntities: ${args.relatedEntities}`);
       if (args.summary) parts.push(`- summary: ${args.summary}`);
+      const [opCreateStub, opInsertAfterHeading, opAppend] = proposedEditOperationSchema.options;
       parts.push(
         "",
         "Step 2 — iterate the returned `proposedEdits` array. For each proposal:",
-        "- `operation: createStub` → use `notes.create` with the `suggestedContent`.",
-        "- `operation: insertAfterHeading` → use `notes.insertAfterHeading` with the given `heading`.",
-        "- `operation: append` → use `notes.append`.",
+        `- \`operation: ${opCreateStub}\` → use \`notes.create\` with the \`suggestedContent\`.`,
+        `- \`operation: ${opInsertAfterHeading}\` → use \`notes.insertAfterHeading\` with the given \`heading\`.`,
+        `- \`operation: ${opAppend}\` → use \`notes.append\`.`,
         "",
         "Apply index edits directly. For stub creations of Entities, consider whether to refine `kind` from `other` to `person/place/org/work` based on context.",
         "",

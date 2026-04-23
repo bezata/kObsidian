@@ -1,6 +1,5 @@
-import { promises as fs } from "node:fs";
 import path from "node:path";
-import { fileExists, readUtf8, writeUtf8 } from "../../lib/filesystem.js";
+import { fileExists, readUtf8, walkMarkdownFiles, writeUtf8 } from "../../lib/filesystem.js";
 import { toVaultRelativePath } from "../../lib/paths.js";
 import type { WikiIndexRebuildArgs } from "../../schema/wiki.js";
 import type { DomainContext } from "../context.js";
@@ -16,16 +15,8 @@ type IndexEntry = {
 
 async function walkCategory(vaultRoot: string, directoryAbsolute: string): Promise<string[]> {
   if (!(await fileExists(directoryAbsolute))) return [];
-  const files: string[] = [];
-  for (const entry of await fs.readdir(directoryAbsolute, { withFileTypes: true })) {
-    if (entry.name.startsWith(".")) continue;
-    const full = path.join(directoryAbsolute, entry.name);
-    if (entry.isFile() && (entry.name.endsWith(".md") || entry.name.endsWith(".markdown"))) {
-      files.push(toVaultRelativePath(vaultRoot, full));
-    }
-  }
-  files.sort((left, right) => left.localeCompare(right));
-  return files;
+  const absolutes = await walkMarkdownFiles(directoryAbsolute);
+  return absolutes.map((absolute) => toVaultRelativePath(vaultRoot, absolute));
 }
 
 async function collectEntries(paths: WikiPaths, directoryAbsolute: string): Promise<IndexEntry[]> {

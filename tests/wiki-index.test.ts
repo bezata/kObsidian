@@ -86,6 +86,24 @@ describe("wiki.indexRebuild", () => {
     expect(index).toMatch(/## Concepts \(0\)/);
   });
 
+  it("includes pages nested in category subfolders", async () => {
+    const vault = await makeTempVault();
+    const context = makeContext(vault);
+    await initWiki(context, {});
+    await fs.mkdir(path.join(vault, "wiki", "Sources", "papers"), { recursive: true });
+    await fs.writeFile(
+      path.join(vault, "wiki", "Sources", "papers", "nested-paper.md"),
+      "---\ntype: source\nsource_type: paper\ntitle: Nested Paper\ningested_at: 2026-04-22\ntags: []\nsummary: A paper in a subfolder.\n---\n\nBody.",
+      "utf8",
+    );
+
+    const result = await rebuildIndex(context, {});
+    expect(result.counts.sources).toBe(1);
+    const index = await readIndex(vault);
+    expect(index).toContain("wiki/Sources/papers/nested-paper.md");
+    expect(index).toContain("Nested Paper");
+  });
+
   it("sorts entries alphabetically by title", async () => {
     const vault = await makeTempVault();
     const context = makeContext(vault);

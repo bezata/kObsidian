@@ -1,11 +1,10 @@
-import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { DomainContext } from "../domain/context.js";
 import { resolveWikiPaths } from "../domain/wiki/paths.js";
 import { AppError } from "../lib/errors.js";
-import { fileExists, readUtf8 } from "../lib/filesystem.js";
+import { fileExists, readUtf8, walkMarkdownFiles } from "../lib/filesystem.js";
 import { toVaultRelativePath } from "../lib/paths.js";
 
 const STATIC_RESOURCE_MIME = "text/markdown";
@@ -16,21 +15,14 @@ async function listWikiPagesForCategory(
   wikiRoot: string,
 ): Promise<string[]> {
   if (!(await fileExists(absoluteCategoryDir))) return [];
-  const entries = await fs.readdir(absoluteCategoryDir, { withFileTypes: true });
-  const files: string[] = [];
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    if (!entry.isFile()) continue;
-    if (!(entry.name.endsWith(".md") || entry.name.endsWith(".markdown"))) continue;
-    const absolute = path.join(absoluteCategoryDir, entry.name);
-    const relative = toVaultRelativePath(vaultRoot, absolute);
-    // relative is like "wiki/Sources/slug.md"; strip the wiki root to get the template path.
-    const withoutWiki = relative.startsWith(`${wikiRoot}/`)
-      ? relative.slice(wikiRoot.length + 1)
-      : relative;
-    files.push(withoutWiki);
-  }
-  return files.sort();
+  const absolutes = await walkMarkdownFiles(absoluteCategoryDir);
+  const wikiPrefix = `${wikiRoot}/`;
+  return absolutes
+    .map((absolute) => toVaultRelativePath(vaultRoot, absolute))
+    .map((relative) =>
+      relative.startsWith(wikiPrefix) ? relative.slice(wikiPrefix.length) : relative,
+    )
+    .sort();
 }
 
 async function readStaticWikiFile(

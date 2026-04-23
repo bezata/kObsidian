@@ -1,7 +1,7 @@
 import { AppError } from "../../lib/errors.js";
 import { fileExists, writeUtf8 } from "../../lib/filesystem.js";
 import { resolveVaultPath } from "../../lib/paths.js";
-import type { WikiIngestArgs } from "../../schema/wiki.js";
+import type { ProposedEditOperation, WikiIngestArgs } from "../../schema/wiki.js";
 import { sourceFrontmatterSchema } from "../../schema/wiki.js";
 import type { DomainContext } from "../context.js";
 import { initWiki } from "./init.js";
@@ -16,7 +16,7 @@ import {
 
 export type ProposedEdit = {
   path: string;
-  operation: "createStub" | "insertAfterHeading" | "append";
+  operation: ProposedEditOperation;
   heading?: string;
   suggestedContent: string;
   reason: string;

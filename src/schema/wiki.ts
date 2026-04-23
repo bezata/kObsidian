@@ -13,6 +13,9 @@ export type EntityKind = z.infer<typeof entityKindSchema>;
 export const wikiPageTypeSchema = z.enum(["source", "concept", "entity"]);
 export type WikiPageType = z.infer<typeof wikiPageTypeSchema>;
 
+export const proposedEditOperationSchema = z.enum(["createStub", "insertAfterHeading", "append"]);
+export type ProposedEditOperation = z.infer<typeof proposedEditOperationSchema>;
+
 export const sourceFrontmatterSchema = z.object({
   type: z.literal("source"),
   source_type: sourceTypeSchema,

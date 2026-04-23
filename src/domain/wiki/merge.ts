@@ -38,38 +38,26 @@ function insertAfterHeadingInContent(content: string, heading: string, block: st
   return lines.join("\n");
 }
 
-function buildConceptFrontmatter(args: {
-  summary?: string;
-  aliases?: string[];
-  citationSource?: string;
-  updated: string;
-}): Record<string, unknown> {
-  return {
-    type: "concept",
-    aliases: args.aliases ?? [],
-    related: [],
-    sources: args.citationSource ? [`[[${args.citationSource}]]`] : [],
-    updated: args.updated,
-    summary: args.summary ?? "Created via wiki.summaryMerge.",
-  };
-}
-
-function buildEntityFrontmatter(args: {
-  summary?: string;
-  aliases?: string[];
+function buildWikiPageFrontmatter(args: {
+  pageType: "concept" | "entity";
   entityKind?: string;
+  summary?: string;
+  aliases?: string[];
   citationSource?: string;
   updated: string;
 }): Record<string, unknown> {
-  return {
-    type: "entity",
-    kind: args.entityKind ?? "other",
+  const base: Record<string, unknown> = {
+    type: args.pageType,
     aliases: args.aliases ?? [],
     related: [],
     sources: args.citationSource ? [`[[${args.citationSource}]]`] : [],
     updated: args.updated,
     summary: args.summary ?? "Created via wiki.summaryMerge.",
   };
+  if (args.pageType === "entity") {
+    base.kind = args.entityKind ?? "other";
+  }
+  return base;
 }
 
 export async function mergeSummary(context: DomainContext, args: WikiSummaryMergeArgs) {
@@ -91,21 +79,14 @@ export async function mergeSummary(context: DomainContext, args: WikiSummaryMerg
   let nextContent: string;
 
   if (!existed) {
-    const frontmatter =
-      pageType === "concept"
-        ? buildConceptFrontmatter({
-            summary: args.summary,
-            aliases: args.aliases,
-            citationSource: args.citationSource,
-            updated,
-          })
-        : buildEntityFrontmatter({
-            summary: args.summary,
-            aliases: args.aliases,
-            entityKind: args.entityKind,
-            citationSource: args.citationSource,
-            updated,
-          });
+    const frontmatter = buildWikiPageFrontmatter({
+      pageType,
+      entityKind: args.entityKind,
+      summary: args.summary,
+      aliases: args.aliases,
+      citationSource: args.citationSource,
+      updated,
+    });
     const skeleton = pageType === "concept" ? conceptBodySkeleton() : entityBodySkeleton();
     const bodyWithSection = insertAfterHeadingInContent(skeleton, heading, block);
     nextContent = renderWithFrontmatter(frontmatter, bodyWithSection);
