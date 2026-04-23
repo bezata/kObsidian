@@ -9,7 +9,7 @@ API for workspace / command actions.
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                           MCP Clients                                │
-│   Claude Code · Claude Desktop · Cursor · VSCode · Windsurf · Zed    │
+│   Claude Code · Claude Desktop · Cursor · VSCode · Antigravity · Zed │
 │   JetBrains AI · Cline · Roo Code · Continue · ChatGPT · Smithery    │
 └────────────────────────────┬─────────────────────────────────────────┘
                              │ JSON-RPC 2.0

@@ -15,7 +15,7 @@ You curate the sources; the LLM does the bookkeeping.
 [![Release CI](https://img.shields.io/github/actions/workflow/status/bezata/kObsidian/release.yml?branch=main&label=CI&logo=github)](https://github.com/bezata/kObsidian/actions/workflows/release.yml)
 
 [![MCP](https://img.shields.io/badge/MCP-2025--11--25-1e88e5?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io)
-[![Bun](https://img.shields.io/badge/runtime-Bun_1.2+-f472b6?logo=bun&logoColor=white)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/runtime-Bun_1.3+-f472b6?logo=bun&logoColor=white)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tools](https://img.shields.io/badge/MCP_tools-90-1e88e5)](docs/tools.md)
 [![Resources](https://img.shields.io/badge/MCP_resources-4-1e88e5)](docs/tools.md#resources)
@@ -54,17 +54,19 @@ Pick the channel that matches your client. All three read the same
 `OBSIDIAN_VAULT_PATH`, `OBSIDIAN_API_URL`, and `OBSIDIAN_REST_API_KEY`
 environment variables — see [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md).
 
-### `npx` / `bunx` — Claude Code, Cursor, VSCode, Windsurf, Zed, Cline, JetBrains AI, …
+### `npx` / `bunx` — Claude Code, Claude Desktop, Cursor, VSCode, Antigravity, Zed, Cline, JetBrains AI, …
 
 ```json
 {
   "mcpServers": {
     "kobsidian": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "kobsidian-mcp"],
       "env": {
         "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
         "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_API_VERIFY_TLS": "false",
         "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
       }
     }
@@ -72,7 +74,10 @@ environment variables — see [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md).
 }
 ```
 
-Swap `npx` for `bunx` for ≈10 ms cold-start instead of ≈200 ms.
+`"type": "stdio"` is optional on clients that infer transport from
+`command` (Claude Code), but **required by Claude Desktop, Cursor,
+VSCode, and Antigravity** — include it for maximum portability. Swap
+`npx` for `bunx` for ≈10 ms cold-start instead of ≈200 ms.
 
 ### Claude Desktop — drag-and-drop `.mcpb`
 
@@ -310,7 +315,7 @@ LLM:  wiki.lint
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                           MCP Clients                                │
-│   Claude Code · Claude Desktop · Cursor · VSCode · Windsurf · Zed    │
+│   Claude Code · Claude Desktop · Cursor · VSCode · Antigravity · Zed │
 │   JetBrains AI · Cline · Continue · ChatGPT · Smithery · …           │
 └────────────────────────────┬─────────────────────────────────────────┘
                              │ JSON-RPC 2.0 · MCP 2025-11-25

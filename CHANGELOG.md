@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Obsidian plugins section in README** with per-plugin setup: Local
+  REST API (required for `workspace.*` / `commands.*` / runtime DQL
+  / Templater tools — includes key generation + env var mapping),
+  plus enhancement plugins (Dataview, Templater, Marp, Kanban, Tasks)
+  with `obsidian://show-plugin?id=…` deep-links. A TLDR table clarifies
+  which plugin combinations unlock which tool namespaces.
+
+### Changed
+
+- **MCP config example** now includes `"type": "stdio"` (required by
+  Claude Desktop / Cursor / VSCode / Antigravity; optional on Claude
+  Code which infers transport) and `OBSIDIAN_API_VERIFY_TLS: "false"`
+  so the example matches what users actually need to paste for the
+  Local-REST-API self-signed cert flow.
+- **Bun badge** bumped `1.2+` → `1.3+` (Bun 1.3.13 is current;
+  `engines.bun` in `package.json` stays at the working floor of
+  `1.2.15` so existing Bun 1.2.x users aren't broken).
+- **Client list** updated: Windsurf → **Antigravity** (Google's AI
+  IDE, successor to Windsurf as of March 2026).
+
 ## [0.1.2] — 2026-04-23
 
 Release-body + badge work. No source or tool-surface changes; this
