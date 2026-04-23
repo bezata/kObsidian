@@ -23,7 +23,7 @@ startCommand:
   commandFunction: |
     (config) => ({
       command: 'npx',
-      args: ['-y', 'kobsidian'],
+      args: ['-y', 'kobsidian-mcp'],
       env: {
         OBSIDIAN_VAULT_PATH: config.obsidianVaultPath,
         ...(config.obsidianApiUrl ? { OBSIDIAN_API_URL: config.obsidianApiUrl } : {}),

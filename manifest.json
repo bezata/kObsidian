@@ -9,10 +9,10 @@
     "name": "Behzat Can Acele",
     "email": "behzatcnacle@gmail.com"
   },
-  "homepage": "https://github.com/behzatcan/kObsidian",
+  "homepage": "https://github.com/bezata/kObsidian",
   "repository": {
     "type": "git",
-    "url": "https://github.com/behzatcan/kObsidian"
+    "url": "https://github.com/bezata/kObsidian"
   },
   "license": "MIT",
   "keywords": ["obsidian", "mcp", "markdown", "wiki", "knowledge-base", "dataview", "bun"],

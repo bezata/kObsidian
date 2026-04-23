@@ -147,6 +147,6 @@ MCP compliance polish, LLM-Wiki layer, and a proper distribution story
   tool.
 - Vitest fixture-based tests against a temp-vault helper.
 
-[Unreleased]: https://github.com/behzatcan/kObsidian/compare/v3.1.0...HEAD
-[3.1.0]: https://github.com/behzatcan/kObsidian/compare/v3.0.0...v3.1.0
-[3.0.0]: https://github.com/behzatcan/kObsidian/releases/tag/v3.0.0
+[Unreleased]: https://github.com/bezata/kObsidian/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/bezata/kObsidian/compare/v3.0.0...v3.1.0
+[3.0.0]: https://github.com/bezata/kObsidian/releases/tag/v3.0.0
