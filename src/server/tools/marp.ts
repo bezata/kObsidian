@@ -8,7 +8,13 @@ import {
 } from "../../domain/marp.js";
 import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  IDEMPOTENT,
+  READ_ONLY,
+  listResultSchema,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 export const marpTools: ToolDefinition[] = [
   {
@@ -17,6 +23,7 @@ export const marpTools: ToolDefinition[] = [
     description: "Read Marp deck frontmatter, slides, directives, and source spans.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => readMarpDeck(context, args as Parameters<typeof readMarpDeck>[1]),
   },
   {
@@ -25,6 +32,7 @@ export const marpTools: ToolDefinition[] = [
     description: "List Marp slides with separator and directive metadata.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       listMarpSlides(context, args as Parameters<typeof listMarpSlides>[1]),
   },
@@ -39,6 +47,7 @@ export const marpTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => readMarpSlide(context, args as Parameters<typeof readMarpSlide>[1]),
   },
   {
@@ -53,6 +62,7 @@ export const marpTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) =>
       updateMarpSlide(context, args as Parameters<typeof updateMarpSlide>[1]),
   },
@@ -66,6 +76,7 @@ export const marpTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) =>
       updateMarpFrontmatter(context, args as Parameters<typeof updateMarpFrontmatter>[1]),
   },

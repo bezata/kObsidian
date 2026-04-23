@@ -11,7 +11,7 @@ import {
 } from "../../domain/links.js";
 import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema } from "../tool-schemas.js";
+import { READ_ONLY, listResultSchema, looseObjectSchema } from "../tool-schemas.js";
 
 export const linkTools: ToolDefinition[] = [
   {
@@ -25,6 +25,7 @@ export const linkTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => getBacklinks(context, args as Parameters<typeof getBacklinks>[1]),
   },
   {
@@ -37,6 +38,7 @@ export const linkTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       getOutgoingLinks(context, args as Parameters<typeof getOutgoingLinks>[1]),
   },
@@ -46,6 +48,7 @@ export const linkTools: ToolDefinition[] = [
     description: "Find broken note links in the vault or a folder.",
     inputSchema: z.object({ directory: z.string().optional(), vaultPath: z.string().optional() }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       findBrokenLinks(context, args as Parameters<typeof findBrokenLinks>[1]),
   },
@@ -55,6 +58,7 @@ export const linkTools: ToolDefinition[] = [
     description: "Build the vault link graph.",
     inputSchema: z.object({ vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => getLinkGraph(context, args as Parameters<typeof getLinkGraph>[1]),
   },
   {
@@ -63,6 +67,7 @@ export const linkTools: ToolDefinition[] = [
     description: "Find notes with no incoming or outgoing links.",
     inputSchema: z.object({ vaultPath: z.string().optional() }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       findOrphanedNotes(context, args as Parameters<typeof findOrphanedNotes>[1]),
   },
@@ -75,6 +80,7 @@ export const linkTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => findHubNotes(context, args as Parameters<typeof findHubNotes>[1]),
   },
   {
@@ -83,6 +89,7 @@ export const linkTools: ToolDefinition[] = [
     description: "Summarize link density and broken-link metrics.",
     inputSchema: z.object({ vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       analyzeLinkHealth(context, args as Parameters<typeof analyzeLinkHealth>[1]),
   },
@@ -96,6 +103,7 @@ export const linkTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       getNoteConnections(context, args as Parameters<typeof getNoteConnections>[1]),
   },

@@ -55,12 +55,17 @@ function getLinkContext(content: string, start: number, end: number, contextLeng
   return `${sliceStart > 0 ? "..." : ""}${content.slice(sliceStart, sliceEnd).trim()}${sliceEnd < content.length ? "..." : ""}`;
 }
 
-function normalizeLinkTarget(linkPath: string): string {
+export function normalizeLinkTarget(linkPath: string): string {
   const cleaned = linkPath.replaceAll("\\", "/").replace(/^\.\//, "");
   return cleaned.endsWith(".md") ? cleaned : `${cleaned}.md`;
 }
 
-async function collectNoteIndex(vaultRoot: string) {
+export type NoteIndex = {
+  byRelative: Map<string, string>;
+  byStem: Map<string, string>;
+};
+
+export async function collectNoteIndex(vaultRoot: string): Promise<NoteIndex> {
   const byRelative = new Map<string, string>();
   const byStem = new Map<string, string>();
   for (const absolutePath of await walkMarkdownFiles(vaultRoot)) {
@@ -71,10 +76,7 @@ async function collectNoteIndex(vaultRoot: string) {
   return { byRelative, byStem };
 }
 
-function resolveIndexedLink(
-  linkPath: string,
-  index: Awaited<ReturnType<typeof collectNoteIndex>>,
-): string | undefined {
+export function resolveIndexedLink(linkPath: string, index: NoteIndex): string | undefined {
   const normalized = normalizeLinkTarget(linkPath);
   return (
     index.byRelative.get(normalized) ??

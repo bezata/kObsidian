@@ -78,6 +78,6 @@ export async function appendToNote(
   return { changed: true, target: args.filePath, summary: `Appended content to ${args.filePath}` };
 }
 
-function escapeRegExp(value: string): string {
+export function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

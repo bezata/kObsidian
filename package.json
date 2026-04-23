@@ -1,21 +1,55 @@
 {
   "name": "kobsidian",
-  "version": "3.0.0",
-  "private": true,
-  "description": "TypeScript + Bun MCP server for Obsidian with hybrid filesystem and API-backed tools.",
+  "version": "3.1.0",
+  "description": "TypeScript MCP server for Obsidian with a filesystem-first LLM Wiki layer, Dataview / Canvas / Kanban / Mermaid / Marp / Templates tools, and both stdio and Streamable HTTP transports.",
   "type": "module",
+  "mcpName": "io.github.behzatcan/kobsidian",
+  "mcp": {
+    "protocolVersion": "2025-11-25"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "obsidian",
+    "markdown",
+    "wiki",
+    "knowledge-base",
+    "dataview",
+    "canvas",
+    "kanban",
+    "bun",
+    "hono"
+  ],
+  "author": "Behzat Can Acele <behzatcnacle@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/behzatcan/kObsidian",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/behzatcan/kObsidian.git"
+  },
+  "bugs": {
+    "url": "https://github.com/behzatcan/kObsidian/issues"
+  },
   "engines": {
+    "node": ">=20",
     "bun": ">=1.2.15"
   },
   "bin": {
     "kobsidian": "./dist/server/stdio.js",
     "kobsidian-http": "./dist/server/http.js"
   },
+  "files": ["dist/**", "manifest.json", "server.json", "README.md", "LICENSE", "CHANGELOG.md"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev:stdio": "bun run src/server/stdio.ts",
     "dev:http": "bun run src/server/http.ts",
-    "build": "bun build src/server/stdio.ts --target bun --outdir dist/server && bun build src/server/http.ts --target bun --outdir dist/server",
+    "build": "bun build src/server/stdio.ts --target node --outdir dist/server --banner '#!/usr/bin/env node' && bun build src/server/http.ts --target bun --outdir dist/server",
+    "build:compile": "bun build --compile --target=bun src/server/stdio.ts --outfile dist/kobsidian",
+    "bundle:mcpb": "bun run scripts/make-mcpb.mjs",
     "inventory": "bun run src/server/generate-tool-inventory.ts",
+    "prepublishOnly": "bun run typecheck && bun run lint && bun run test && bun run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

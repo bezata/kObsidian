@@ -8,7 +8,7 @@ import {
 } from "../../domain/kanban.js";
 import { notePathSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import { READ_ONLY, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
 
 export const kanbanTools: ToolDefinition[] = [
   {
@@ -17,6 +17,7 @@ export const kanbanTools: ToolDefinition[] = [
     description: "Parse a markdown Kanban board file.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       parseKanbanBoard(context, args as Parameters<typeof parseKanbanBoard>[1]),
   },
@@ -72,6 +73,7 @@ export const kanbanTools: ToolDefinition[] = [
     description: "Get card counts and completion rates for a Kanban board.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       getKanbanStatistics(context, args as Parameters<typeof getKanbanStatistics>[1]),
   },

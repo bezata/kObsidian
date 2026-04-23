@@ -28,6 +28,14 @@ describe("server integration", () => {
     const tools = await client.listTools();
     expect(tools.tools.some((tool) => tool.name === "notes.read")).toBe(true);
 
+    const byName = new Map(tools.tools.map((tool) => [tool.name, tool]));
+    expect(byName.get("notes.read")?.annotations?.readOnlyHint).toBe(true);
+    expect(byName.get("notes.delete")?.annotations?.destructiveHint).toBe(true);
+    expect(byName.get("wiki.init")?.annotations?.idempotentHint).toBe(true);
+    expect(byName.get("wiki.indexRebuild")?.annotations?.destructiveHint).toBe(true);
+    expect(byName.get("wiki.indexRebuild")?.annotations?.idempotentHint).toBe(true);
+    expect(byName.get("commands.execute")?.annotations?.openWorldHint).toBe(true);
+
     const result = await client.callTool({
       name: "notes.read",
       arguments: { path: "note1.md" },
@@ -67,5 +75,60 @@ describe("server integration", () => {
     const tools = await client.listTools();
     expect(tools.tools.some((tool) => tool.name === "tags.list")).toBe(true);
     await client.close();
+  });
+
+  it("exposes wiki.* tools end-to-end and walks the ingest → lint flow", async () => {
+    const vault = await makeTempVault();
+    const context = createDomainContext(
+      getEnv({
+        ...process.env,
+        OBSIDIAN_VAULT_PATH: vault,
+        KOBSIDIAN_ALLOWED_ORIGINS: "http://localhost",
+      }),
+    );
+    const server = createServer(context);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    const client = new Client({ name: "wiki-client", version: "1.0.0" }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const tools = await client.listTools();
+    const wikiNames = tools.tools.map((t) => t.name).filter((n) => n.startsWith("wiki."));
+    expect(wikiNames).toEqual(
+      expect.arrayContaining([
+        "wiki.init",
+        "wiki.ingest",
+        "wiki.logAppend",
+        "wiki.indexRebuild",
+        "wiki.query",
+        "wiki.lint",
+        "wiki.summaryMerge",
+      ]),
+    );
+
+    const init = await client.callTool({ name: "wiki.init", arguments: {} });
+    expect(init.structuredContent).toMatchObject({ target: "wiki" });
+
+    const ingest = await client.callTool({
+      name: "wiki.ingest",
+      arguments: {
+        title: "Memex Paper",
+        content: "Memex content.",
+        sourceType: "paper",
+        summary: "Memex concept introduced.",
+        ingestedAt: "2026-04-23",
+        relatedConcepts: ["Memex"],
+      },
+    });
+    expect(ingest.structuredContent).toMatchObject({
+      sourcePage: "wiki/Sources/memex-paper.md",
+      proposedEditCount: 2,
+    });
+
+    const lint = await client.callTool({ name: "wiki.lint", arguments: {} });
+    expect(lint.structuredContent).toHaveProperty("findings");
+
+    await client.close();
+    await server.close();
   });
 });

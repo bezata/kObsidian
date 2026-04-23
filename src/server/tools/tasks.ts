@@ -13,7 +13,13 @@ import {
   tagSchema,
 } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  IDEMPOTENT,
+  READ_ONLY,
+  listResultSchema,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 const prioritySchema = z.enum(["highest", "high", "normal", "low", "lowest"]);
 const statusSchema = z.enum(["incomplete", "completed", "all"]);
@@ -36,6 +42,7 @@ export const taskTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => searchTasks(context, args as Parameters<typeof searchTasks>[1]),
   },
   {
@@ -87,6 +94,7 @@ export const taskTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) =>
       updateTaskMetadata(context, args as Parameters<typeof updateTaskMetadata>[1]),
   },
@@ -96,6 +104,7 @@ export const taskTools: ToolDefinition[] = [
     description: "Get aggregate task statistics for the vault.",
     inputSchema: z.object({ vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       getTaskStatistics(context, args as Parameters<typeof getTaskStatistics>[1]),
   },

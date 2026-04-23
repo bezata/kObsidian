@@ -1,0 +1,52 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/registry/v1/server.schema.json",
+  "name": "io.github.behzatcan/kobsidian",
+  "description": "Filesystem-first MCP server for Obsidian vaults with an LLM-Wiki layer (notes, links, tags, tasks, Dataview, Canvas, Kanban, Mermaid, Marp, Templates, workspace commands, and wiki.* orchestration).",
+  "version": "3.1.0",
+  "repository": {
+    "url": "https://github.com/behzatcan/kObsidian",
+    "source": "github"
+  },
+  "license": "MIT",
+  "websiteUrl": "https://github.com/behzatcan/kObsidian",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "kobsidian",
+      "version": "3.1.0",
+      "transport": {
+        "type": "stdio",
+        "command": "kobsidian"
+      },
+      "environmentVariables": [
+        {
+          "name": "OBSIDIAN_VAULT_PATH",
+          "description": "Absolute path to the Obsidian vault this server should operate on.",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "OBSIDIAN_API_URL",
+          "description": "Base URL of the Obsidian Local REST API plugin. Only required for workspace.* and commands.* tools.",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "https://127.0.0.1:27124"
+        },
+        {
+          "name": "OBSIDIAN_REST_API_KEY",
+          "description": "Bearer key for the Obsidian Local REST API plugin.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "transport": {
+        "type": "streamable-http",
+        "url": "http://127.0.0.1:3000/mcp"
+      }
+    }
+  ]
+}

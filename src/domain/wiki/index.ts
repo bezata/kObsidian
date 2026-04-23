@@ -1,0 +1,12 @@
+export { ingestSource } from "./ingest.js";
+export type { ProposedEdit } from "./ingest.js";
+export { rebuildIndex } from "./index-rebuild.js";
+export { initWiki } from "./init.js";
+export { lintWiki } from "./lint.js";
+export type { WikiLintFindings } from "./lint.js";
+export { appendLogEntry } from "./log.js";
+export { mergeSummary } from "./merge.js";
+export { classifyWikiPath, isInsideWiki, resolveWikiPaths, slugify, todayIso } from "./paths.js";
+export type { WikiPaths } from "./paths.js";
+export { queryWiki } from "./query.js";
+export type { WikiQueryMatch } from "./query.js";

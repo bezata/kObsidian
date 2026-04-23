@@ -11,6 +11,7 @@ await fs.writeFile(
       name: tool.name,
       title: tool.title,
       description: tool.description,
+      ...(tool.annotations ? { annotations: tool.annotations } : {}),
     })),
     null,
     2,

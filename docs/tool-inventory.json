@@ -2,7 +2,10 @@
   {
     "name": "notes.read",
     "title": "Read Note",
-    "description": "Read a note from the vault with parsed metadata."
+    "description": "Read a note from the vault with parsed metadata.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "notes.create",
@@ -17,47 +20,74 @@
   {
     "name": "notes.delete",
     "title": "Delete Note",
-    "description": "Delete a note from the vault."
+    "description": "Delete a note from the vault.",
+    "annotations": {
+      "destructiveHint": true
+    }
   },
   {
     "name": "notes.search",
     "title": "Search Notes",
-    "description": "Search notes by text with lightweight support for tag: and path: filters."
+    "description": "Search notes by text with lightweight support for tag: and path: filters.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "notes.searchByDate",
     "title": "Search Notes By Date",
-    "description": "List notes by created or modified date."
+    "description": "List notes by created or modified date.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "notes.list",
     "title": "List Notes",
-    "description": "List notes in the vault or a folder."
+    "description": "List notes in the vault or a folder.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "notes.listFolders",
     "title": "List Folders",
-    "description": "List folders in the vault."
+    "description": "List folders in the vault.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "notes.move",
     "title": "Move Note",
-    "description": "Move a note and optionally update links that reference it."
+    "description": "Move a note and optionally update links that reference it.",
+    "annotations": {
+      "destructiveHint": true
+    }
   },
   {
     "name": "notes.createFolder",
     "title": "Create Folder",
-    "description": "Create a folder in the vault."
+    "description": "Create a folder in the vault.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "notes.moveFolder",
     "title": "Move Folder",
-    "description": "Move a folder and optionally update links inside the vault."
+    "description": "Move a folder and optionally update links inside the vault.",
+    "annotations": {
+      "destructiveHint": true
+    }
   },
   {
     "name": "notes.info",
     "title": "Note Info",
-    "description": "Get note metadata and lightweight statistics without loading the result into a client-specific schema."
+    "description": "Get note metadata and lightweight statistics without loading the result into a client-specific schema.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "notes.insertAfterHeading",
@@ -72,7 +102,10 @@
   {
     "name": "notes.updateFrontmatter",
     "title": "Update Frontmatter",
-    "description": "Create or update a frontmatter field."
+    "description": "Create or update a frontmatter field.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "notes.append",
@@ -82,7 +115,10 @@
   {
     "name": "tags.analyze",
     "title": "Analyze Tags",
-    "description": "Extract frontmatter and inline tags from a note."
+    "description": "Extract frontmatter and inline tags from a note.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "tags.add",
@@ -102,67 +138,106 @@
   {
     "name": "tags.search",
     "title": "Search By Tag",
-    "description": "Find notes that contain a tag in frontmatter or inline content."
+    "description": "Find notes that contain a tag in frontmatter or inline content.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "tags.list",
     "title": "List Tags",
-    "description": "List unique tags used across the vault."
+    "description": "List unique tags used across the vault.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.backlinks",
     "title": "Get Backlinks",
-    "description": "Find notes that link to a target note."
+    "description": "Find notes that link to a target note.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.outgoing",
     "title": "Get Outgoing Links",
-    "description": "Extract links referenced by a note."
+    "description": "Extract links referenced by a note.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.broken",
     "title": "Find Broken Links",
-    "description": "Find broken note links in the vault or a folder."
+    "description": "Find broken note links in the vault or a folder.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.graph",
     "title": "Get Link Graph",
-    "description": "Build the vault link graph."
+    "description": "Build the vault link graph.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.orphaned",
     "title": "Find Orphaned Notes",
-    "description": "Find notes with no incoming or outgoing links."
+    "description": "Find notes with no incoming or outgoing links.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.hubs",
     "title": "Find Hub Notes",
-    "description": "Find notes with many outgoing links."
+    "description": "Find notes with many outgoing links.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.health",
     "title": "Analyze Link Health",
-    "description": "Summarize link density and broken-link metrics."
+    "description": "Summarize link density and broken-link metrics.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "links.connections",
     "title": "Get Note Connections",
-    "description": "Explore direct and multi-hop note connections."
+    "description": "Explore direct and multi-hop note connections.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "stats.note",
     "title": "Note Statistics",
-    "description": "Get statistics for a single note."
+    "description": "Get statistics for a single note.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "stats.vault",
     "title": "Vault Statistics",
-    "description": "Get aggregate statistics for the whole vault."
+    "description": "Get aggregate statistics for the whole vault.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "tasks.search",
     "title": "Search Tasks",
-    "description": "Search Tasks-plugin style markdown tasks across the vault."
+    "description": "Search Tasks-plugin style markdown tasks across the vault.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "tasks.create",
@@ -177,27 +252,42 @@
   {
     "name": "tasks.updateMetadata",
     "title": "Update Task Metadata",
-    "description": "Update task dates, priority, or recurrence in place."
+    "description": "Update task dates, priority, or recurrence in place.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "tasks.stats",
     "title": "Task Statistics",
-    "description": "Get aggregate task statistics for the vault."
+    "description": "Get aggregate task statistics for the vault.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "dataview.index.read",
     "title": "Read Dataview Index",
-    "description": "Read page, list-item, task, DQL, and DataviewJS metadata from a note."
+    "description": "Read page, list-item, task, DQL, and DataviewJS metadata from a note.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "dataview.fields.extract",
     "title": "Extract Dataview Fields",
-    "description": "Extract scoped Dataview fields from a note."
+    "description": "Extract scoped Dataview fields from a note.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "dataview.fields.search",
     "title": "Search Dataview Fields",
-    "description": "Search notes by Dataview field key and optional value."
+    "description": "Search notes by Dataview field key and optional value.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "dataview.fields.add",
@@ -212,87 +302,142 @@
   {
     "name": "dataview.query.read",
     "title": "Read Dataview Query Blocks",
-    "description": "Extract fenced dataview DQL blocks from a note."
+    "description": "Extract fenced dataview DQL blocks from a note.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "dataview.query.update",
     "title": "Update Dataview Query Block",
-    "description": "Replace one fenced dataview DQL block source-preservingly."
+    "description": "Replace one fenced dataview DQL block source-preservingly.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "dataview.js.read",
     "title": "Read DataviewJS Blocks",
-    "description": "Extract fenced dataviewjs blocks from a note without executing them."
+    "description": "Extract fenced dataviewjs blocks from a note without executing them.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "dataview.js.update",
     "title": "Update DataviewJS Block",
-    "description": "Replace one fenced dataviewjs block source-preservingly."
+    "description": "Replace one fenced dataviewjs block source-preservingly.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "dataview.query",
     "title": "Run Dataview Query",
-    "description": "Execute a Dataview Query Language (DQL) query through the Obsidian API."
+    "description": "Execute a Dataview Query Language (DQL) query through the Obsidian API.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "dataview.listByTag",
     "title": "List Notes By Tag (DQL)",
-    "description": "Run a DQL LIST query for a tag."
+    "description": "Run a DQL LIST query for a tag.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "dataview.listByFolder",
     "title": "List Notes By Folder (DQL)",
-    "description": "Run a DQL LIST query for a folder."
+    "description": "Run a DQL LIST query for a folder.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "dataview.table",
     "title": "Table Query (DQL)",
-    "description": "Run a DQL TABLE query."
+    "description": "Run a DQL TABLE query.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "mermaid.blocks.list",
     "title": "List Mermaid Blocks",
-    "description": "List fenced Mermaid blocks in a note or across the vault."
+    "description": "List fenced Mermaid blocks in a note or across the vault.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "mermaid.blocks.read",
     "title": "Read Mermaid Block",
-    "description": "Read one Mermaid block with source spans, directives, and config metadata."
+    "description": "Read one Mermaid block with source spans, directives, and config metadata.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "mermaid.blocks.update",
     "title": "Update Mermaid Block",
-    "description": "Replace one fenced Mermaid block source-preservingly."
+    "description": "Replace one fenced Mermaid block source-preservingly.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "marp.deck.read",
     "title": "Read Marp Deck",
-    "description": "Read Marp deck frontmatter, slides, directives, and source spans."
+    "description": "Read Marp deck frontmatter, slides, directives, and source spans.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "marp.slides.list",
     "title": "List Marp Slides",
-    "description": "List Marp slides with separator and directive metadata."
+    "description": "List Marp slides with separator and directive metadata.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "marp.slides.read",
     "title": "Read Marp Slide",
-    "description": "Read one Marp slide source-preservingly."
+    "description": "Read one Marp slide source-preservingly.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "marp.slides.update",
     "title": "Update Marp Slide",
-    "description": "Replace one Marp slide body without rewriting neighboring slides."
+    "description": "Replace one Marp slide body without rewriting neighboring slides.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "marp.frontmatter.update",
     "title": "Update Marp Frontmatter",
-    "description": "Update selected Marp deck frontmatter fields while preserving unrelated source."
+    "description": "Update selected Marp deck frontmatter fields while preserving unrelated source.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "kanban.parse",
     "title": "Parse Kanban Board",
-    "description": "Parse a markdown Kanban board file."
+    "description": "Parse a markdown Kanban board file.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "kanban.addCard",
@@ -312,12 +457,18 @@
   {
     "name": "kanban.stats",
     "title": "Kanban Statistics",
-    "description": "Get card counts and completion rates for a Kanban board."
+    "description": "Get card counts and completion rates for a Kanban board.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "templates.expand",
     "title": "Expand Template",
-    "description": "Expand filesystem template variables into content."
+    "description": "Expand filesystem template variables into content.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "templates.createNote",
@@ -327,91 +478,198 @@
   {
     "name": "templates.list",
     "title": "List Templates",
-    "description": "List markdown templates in a folder."
+    "description": "List markdown templates in a folder.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "templates.renderTemplater",
     "title": "Render Templater Template",
-    "description": "Render a Templater template via the Obsidian API."
+    "description": "Render a Templater template via the Obsidian API.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "templates.createNoteTemplater",
     "title": "Create Note From Templater",
-    "description": "Create a note from a Templater template via the Obsidian API."
+    "description": "Create a note from a Templater template via the Obsidian API.",
+    "annotations": {
+      "openWorldHint": true
+    }
   },
   {
     "name": "templates.insertTemplater",
     "title": "Insert Templater Template",
-    "description": "Insert a Templater template into the active note."
+    "description": "Insert a Templater template into the active note.",
+    "annotations": {
+      "openWorldHint": true
+    }
   },
   {
     "name": "canvas.parse",
     "title": "Parse Canvas",
-    "description": "Parse an Obsidian canvas file."
+    "description": "Parse an Obsidian canvas file.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "canvas.addNode",
     "title": "Add Canvas Node",
-    "description": "Add a text or file node to an Obsidian canvas."
+    "description": "Add a text or file node to an Obsidian canvas.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "canvas.addEdge",
     "title": "Add Canvas Edge",
-    "description": "Connect two nodes in a canvas."
+    "description": "Connect two nodes in a canvas.",
+    "annotations": {
+      "idempotentHint": true
+    }
   },
   {
     "name": "canvas.removeNode",
     "title": "Remove Canvas Node",
-    "description": "Remove a node and its edges from a canvas."
+    "description": "Remove a node and its edges from a canvas.",
+    "annotations": {
+      "destructiveHint": true
+    }
   },
   {
     "name": "canvas.connections",
     "title": "Canvas Node Connections",
-    "description": "Get incoming and outgoing edges for a canvas node."
+    "description": "Get incoming and outgoing edges for a canvas node.",
+    "annotations": {
+      "readOnlyHint": true
+    }
   },
   {
     "name": "workspace.activeFile",
     "title": "Get Active File",
-    "description": "Get the currently active file in Obsidian."
+    "description": "Get the currently active file in Obsidian.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "workspace.openFile",
     "title": "Open File",
-    "description": "Open a file in Obsidian."
+    "description": "Open a file in Obsidian.",
+    "annotations": {
+      "openWorldHint": true
+    }
   },
   {
     "name": "workspace.closeActiveFile",
     "title": "Close Active File",
-    "description": "Close the active file in Obsidian."
+    "description": "Close the active file in Obsidian.",
+    "annotations": {
+      "openWorldHint": true
+    }
   },
   {
     "name": "workspace.navigateBack",
     "title": "Navigate Back",
-    "description": "Go back in Obsidian history."
+    "description": "Go back in Obsidian history.",
+    "annotations": {
+      "openWorldHint": true
+    }
   },
   {
     "name": "workspace.navigateForward",
     "title": "Navigate Forward",
-    "description": "Go forward in Obsidian history."
+    "description": "Go forward in Obsidian history.",
+    "annotations": {
+      "openWorldHint": true
+    }
   },
   {
     "name": "workspace.toggleEditMode",
     "title": "Toggle Edit Mode",
-    "description": "Toggle edit/preview mode in Obsidian."
+    "description": "Toggle edit/preview mode in Obsidian.",
+    "annotations": {
+      "openWorldHint": true
+    }
   },
   {
     "name": "commands.execute",
     "title": "Execute Command",
-    "description": "Execute an Obsidian command by ID."
+    "description": "Execute an Obsidian command by ID.",
+    "annotations": {
+      "destructiveHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "commands.list",
     "title": "List Commands",
-    "description": "List all available Obsidian commands."
+    "description": "List all available Obsidian commands.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
   },
   {
     "name": "commands.search",
     "title": "Search Commands",
-    "description": "Search Obsidian commands by ID or name."
+    "description": "Search Obsidian commands by ID or name.",
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "wiki.init",
+    "title": "Initialize Wiki",
+    "description": "Scaffold the wiki layout: Sources/, Concepts/, Entities/ folders plus seed index.md, log.md, and wiki-schema.md. Idempotent; use force:true to re-seed index/log/schema files.",
+    "annotations": {
+      "idempotentHint": true
+    }
+  },
+  {
+    "name": "wiki.ingest",
+    "title": "Ingest Source",
+    "description": "File a new source into the wiki: create Sources/<slug>.md with canonical frontmatter, append a log entry, and return proposedEdits for index + related concept/entity pages for the LLM to apply via notes.update."
+  },
+  {
+    "name": "wiki.logAppend",
+    "title": "Append Wiki Log Entry",
+    "description": "Append a typed chronological entry to the wiki log using the convention '## [YYYY-MM-DD] <op> | <title>'. Initializes the wiki if needed."
+  },
+  {
+    "name": "wiki.indexRebuild",
+    "title": "Rebuild Wiki Index",
+    "description": "Regenerate the wiki index.md from the current state of Sources/, Concepts/, and Entities/. Groups entries by category; supports optional per-category counts.",
+    "annotations": {
+      "idempotentHint": true,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "wiki.query",
+    "title": "Query Wiki",
+    "description": "Rank wiki pages relevant to a topic using filename, alias, tag, summary and body hits. Returns the top pages so the LLM can drill in with notes.read.",
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "wiki.lint",
+    "title": "Lint Wiki",
+    "description": "Health-check the wiki: orphans, broken links, stale sources, missing concept pages, singleton tags, and index.md parity. Read-only; returns grouped findings with totals.",
+    "annotations": {
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "wiki.summaryMerge",
+    "title": "Merge Summary Into Concept Or Entity Page",
+    "description": "Add a cited section into an existing concept or entity page (or create the page with canonical frontmatter if missing). Bumps 'updated' on existing pages."
   }
 ]

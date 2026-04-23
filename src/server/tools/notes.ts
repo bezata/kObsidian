@@ -26,7 +26,14 @@ import {
   positiveIntSchema,
 } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  DESTRUCTIVE,
+  IDEMPOTENT,
+  READ_ONLY,
+  listResultSchema,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 export const noteTools: ToolDefinition[] = [
   {
@@ -35,6 +42,7 @@ export const noteTools: ToolDefinition[] = [
     description: "Read a note from the vault with parsed metadata.",
     inputSchema: z.object({ path: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => readNote(context, args as Parameters<typeof readNote>[1]),
   },
   {
@@ -70,6 +78,7 @@ export const noteTools: ToolDefinition[] = [
     description: "Delete a note from the vault.",
     inputSchema: z.object({ path: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: mutationResultSchema,
+    annotations: DESTRUCTIVE,
     handler: (context, args) => deleteNote(context, args as Parameters<typeof deleteNote>[1]),
   },
   {
@@ -82,6 +91,7 @@ export const noteTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => searchNotes(context, args as Parameters<typeof searchNotes>[1]),
   },
   {
@@ -95,6 +105,7 @@ export const noteTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => searchByDate(context, args as Parameters<typeof searchByDate>[1]),
   },
   {
@@ -107,6 +118,7 @@ export const noteTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => listNotes(context, args as Parameters<typeof listNotes>[1]),
   },
   {
@@ -119,6 +131,7 @@ export const noteTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => listFolders(context, args as Parameters<typeof listFolders>[1]),
   },
   {
@@ -132,6 +145,7 @@ export const noteTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: DESTRUCTIVE,
     handler: (context, args) => moveNote(context, args as Parameters<typeof moveNote>[1]),
   },
   {
@@ -140,6 +154,7 @@ export const noteTools: ToolDefinition[] = [
     description: "Create a folder in the vault.",
     inputSchema: z.object({ folderPath: z.string().min(1), vaultPath: z.string().optional() }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) => createFolder(context, args as Parameters<typeof createFolder>[1]),
   },
   {
@@ -153,6 +168,7 @@ export const noteTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: DESTRUCTIVE,
     handler: (context, args) => moveFolder(context, args as Parameters<typeof moveFolder>[1]),
   },
   {
@@ -162,6 +178,7 @@ export const noteTools: ToolDefinition[] = [
       "Get note metadata and lightweight statistics without loading the result into a client-specific schema.",
     inputSchema: z.object({ path: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => getNoteInfo(context, args as Parameters<typeof getNoteInfo>[1]),
   },
   {
@@ -203,6 +220,7 @@ export const noteTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) =>
       updateFrontmatterField(context, args as Parameters<typeof updateFrontmatterField>[1]),
   },

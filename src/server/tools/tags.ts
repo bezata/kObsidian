@@ -10,7 +10,12 @@ import {
 } from "../../domain/tags.js";
 import { notePathSchema, tagSchema, tagsSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  READ_ONLY,
+  listResultSchema,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 export const tagTools: ToolDefinition[] = [
   {
@@ -19,6 +24,7 @@ export const tagTools: ToolDefinition[] = [
     description: "Extract frontmatter and inline tags from a note.",
     inputSchema: z.object({ path: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: async (context, args) => {
       const note = await readNote(context, args as { path: string; vaultPath?: string });
       return { path: note.path, ...extractAllTags(note.content) };
@@ -67,6 +73,7 @@ export const tagTools: ToolDefinition[] = [
     description: "Find notes that contain a tag in frontmatter or inline content.",
     inputSchema: z.object({ tag: tagSchema, vaultPath: z.string().optional() }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => searchByTag(context, args as Parameters<typeof searchByTag>[1]),
   },
   {
@@ -79,6 +86,7 @@ export const tagTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => listTags(context, args as Parameters<typeof listTags>[1]),
   },
 ];

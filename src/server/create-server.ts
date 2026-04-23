@@ -3,7 +3,9 @@ import { z } from "zod";
 import { type DomainContext, createDomainContext } from "../domain/context.js";
 import { toAppError } from "../lib/errors.js";
 import { ok } from "../lib/results.js";
+import { registerWikiPrompts } from "./prompts.js";
 import { toolRegistry } from "./registry.js";
+import { registerWikiResources } from "./resources.js";
 
 function getSummary(result: unknown): string | undefined {
   if (
@@ -31,6 +33,9 @@ export function createServer(context: DomainContext = createDomainContext()) {
     {
       capabilities: {
         logging: {},
+        resources: { listChanged: false },
+        prompts: { listChanged: false },
+        tools: { listChanged: false },
       },
     },
   );
@@ -43,6 +48,7 @@ export function createServer(context: DomainContext = createDomainContext()) {
         description: tool.description,
         inputSchema: tool.inputSchema ?? z.object({}),
         outputSchema: tool.outputSchema,
+        ...(tool.annotations ? { annotations: tool.annotations } : {}),
       },
       async (args) => {
         try {
@@ -55,6 +61,9 @@ export function createServer(context: DomainContext = createDomainContext()) {
       },
     );
   }
+
+  registerWikiResources(server, context);
+  registerWikiPrompts(server);
 
   return server;
 }
