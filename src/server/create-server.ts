@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { PACKAGE_VERSION } from "../config/package-version.js";
 import { type DomainContext, createDomainContext } from "../domain/context.js";
 import { toAppError } from "../lib/errors.js";
 import { ok } from "../lib/results.js";
@@ -27,7 +28,7 @@ export function createServer(context: DomainContext = createDomainContext()) {
   const server = new McpServer(
     {
       name: "kobsidian",
-      version: "3.0.0",
+      version: PACKAGE_VERSION,
       title: "kObsidian",
     },
     {

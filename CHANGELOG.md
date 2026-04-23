@@ -7,8 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-23
+
+### Fixed
+
+- **Live-Obsidian tools now work under Node** (`workspace.*`,
+  `commands.*`, and every other call through the Local REST API
+  plugin). The previous client passed `tls: { rejectUnauthorized:
+  false }` on `RequestInit`, which is a Bun-only fetch extension —
+  Node's fetch (undici) silently ignored it, so the plugin's
+  self-signed cert was rejected and every request failed with a
+  generic `unavailable: Unable to reach Obsidian API at
+  https://127.0.0.1:27124`. The client now branches on runtime: Bun
+  keeps the `tls` RequestInit key; Node uses an explicit `undici`
+  `Agent` dispatcher with `rejectUnauthorized: false`. The
+  `unavailable` error now also includes the underlying fetch error
+  code (e.g. `SELF_SIGNED_CERT_IN_CHAIN`, `ECONNREFUSED`) so future
+  misdiagnoses are a one-line grep.
+
 ### Added
 
+- **Update check on startup.** On every spawn, `stdio` and `http`
+  entrypoints fire a non-blocking, 3-second-budget fetch against
+  `https://registry.npmjs.org/kobsidian-mcp/latest`. If a newer
+  version is published, a single line is written to **stderr** (which
+  Claude Code / Cursor / Antigravity capture into their MCP server
+  logs). Errors are swallowed. Disable with
+  `KOBSIDIAN_DISABLE_UPDATE_CHECK=1`.
+- **`system.version` MCP tool** — returns `{ name, version, runtime,
+  runtimeVersion }` so clients can introspect which build is actually
+  running without parsing the MCP handshake payload.
 - **Obsidian plugins section in README** with per-plugin setup: Local
   REST API (required for `workspace.*` / `commands.*` / runtime DQL
   / Templater tools — includes key generation + env var mapping),
@@ -18,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **MCP handshake version is now sourced from `package.json`** instead
+  of a hardcoded `3.0.0` literal in `src/server/create-server.ts`.
+  Handshake and npm now agree.
+- **`undici` added as a direct dependency** (`^6.21.0`) so the Node
+  TLS path can use `Agent` without relying on Node internals.
 - **MCP config example** now includes `"type": "stdio"` (required by
   Claude Desktop / Cursor / VSCode / Antigravity; optional on Claude
   Code which infers transport) and `OBSIDIAN_API_VERIFY_TLS: "false"`

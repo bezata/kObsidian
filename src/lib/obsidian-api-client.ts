@@ -1,4 +1,6 @@
+import { Agent, type Dispatcher } from "undici";
 import { AppError } from "./errors.js";
+import { isBun } from "./runtime.js";
 
 export type ObsidianApiClientOptions = {
   baseUrl: string;
@@ -7,17 +9,25 @@ export type ObsidianApiClientOptions = {
   verifyTls?: boolean;
 };
 
+type InsecureRequestInit = RequestInit & {
+  tls?: { rejectUnauthorized: boolean };
+  dispatcher?: Dispatcher;
+};
+
 export class ObsidianApiClient {
   readonly baseUrl: string;
   readonly apiKey: string | undefined;
   readonly timeoutMs: number;
   readonly verifyTls: boolean;
+  private readonly insecureDispatcher: Dispatcher | undefined;
 
   constructor(options: ObsidianApiClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.apiKey = options.apiKey;
     this.timeoutMs = options.timeoutMs ?? 10_000;
     this.verifyTls = options.verifyTls ?? false;
+    this.insecureDispatcher =
+      !this.verifyTls && !isBun ? new Agent({ connect: { rejectUnauthorized: false } }) : undefined;
   }
 
   get isConfigured(): boolean {
@@ -32,7 +42,7 @@ export class ObsidianApiClient {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
-      const requestInit: RequestInit & { tls?: { rejectUnauthorized: boolean } } = {
+      const requestInit: InsecureRequestInit = {
         ...init,
         signal: controller.signal,
         headers: {
@@ -40,8 +50,14 @@ export class ObsidianApiClient {
           ...(init.body ? { "Content-Type": "application/json" } : {}),
           ...init.headers,
         },
-        ...(this.verifyTls ? {} : { tls: { rejectUnauthorized: false } }),
       };
+      if (!this.verifyTls) {
+        if (isBun) {
+          requestInit.tls = { rejectUnauthorized: false };
+        } else if (this.insecureDispatcher) {
+          requestInit.dispatcher = this.insecureDispatcher;
+        }
+      }
       const response = await fetch(`${this.baseUrl}${pathname}`, requestInit);
 
       if (response.status === 401 || response.status === 403) {
@@ -69,9 +85,12 @@ export class ObsidianApiClient {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("unavailable", `Unable to reach Obsidian API at ${this.baseUrl}`, {
-        cause: error,
-      });
+      const detail = describeFetchError(error);
+      throw new AppError(
+        "unavailable",
+        `Unable to reach Obsidian API at ${this.baseUrl}${detail ? ` (${detail})` : ""}`,
+        { cause: error },
+      );
     } finally {
       clearTimeout(timeout);
     }
@@ -85,4 +104,16 @@ export class ObsidianApiClient {
       return false;
     }
   }
+}
+
+function describeFetchError(error: unknown): string | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const code = (error as { code?: unknown }).code;
+  if (typeof code === "string" && code) return code;
+  const cause = (error as { cause?: unknown }).cause;
+  if (cause && typeof cause === "object") {
+    const causeCode = (cause as { code?: unknown }).code;
+    if (typeof causeCode === "string" && causeCode) return causeCode;
+  }
+  return undefined;
 }
