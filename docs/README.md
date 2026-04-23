@@ -11,6 +11,9 @@ Deeper reading, grouped by what you want to do.
 
 - **[wiki.md](wiki.md)** — what the wiki layer is, why the `proposedEdits`
   contract exists, log format, lint categories, how a typical session flows.
+- **[examples.md](examples.md)** — three worked examples end-to-end:
+  personal research wiki, engineering ADR archive, codebase knowledge
+  base (design docs + RFCs + post-mortems).
 
 ## Tools, resources, prompts
 
@@ -34,4 +37,5 @@ Deeper reading, grouped by what you want to do.
 ---
 
 New contributor? Read in this order: [architecture](architecture.md) →
-[wiki](wiki.md) → [tools](tools.md) → [TESTING](TESTING.md).
+[wiki](wiki.md) → [examples](examples.md) → [tools](tools.md) →
+[TESTING](TESTING.md).

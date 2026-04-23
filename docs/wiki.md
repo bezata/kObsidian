@@ -218,7 +218,7 @@ Plus three server-side prompts that mirror the Claude Code skills at
 
 ## Related reading
 
-- **LLM Wiki pattern** — [Andrej Karpathy](https://github.com/karpathy).
+- **LLM Wiki pattern** — [Andrej Karpathy's gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
   The key insight: maintenance cost is what kills wikis, and maintenance
   is exactly the kind of work LLMs are excellent at. kObsidian is one
   concrete implementation of the idea: filesystem-first, TypeScript,
