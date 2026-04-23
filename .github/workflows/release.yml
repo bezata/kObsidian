@@ -89,12 +89,22 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Download at the workspace root (no explicit `path:`) so the
+      # archive's internal tree — which already contains a `release/`
+      # directory — is recreated as-is. A `path: release/` + the
+      # archive's own `release/...` prefix would produce
+      # `release/release/*.mcpb` and make the VT regex below miss.
       - name: Download .mcpb bundles from build artifacts
         uses: actions/download-artifact@v5
         with:
-          path: release
           pattern: kobsidian-*
           merge-multiple: true
+      - name: List downloaded files
+        run: |
+          echo "=== release/ tree ==="
+          ls -la release/ || true
+          echo "=== all .mcpb ==="
+          find . -name '*.mcpb' -type f 2>/dev/null
       - name: Scan .mcpb bundles
         uses: crazy-max/ghaction-virustotal@v4
         with:
@@ -147,4 +157,14 @@ jobs:
         #   3. A one-time `npm trust github --file .github/workflows/release.yml
         #      --repo bezata/kObsidian` run locally to register the trust
         # Provenance is automatic under Trusted Publishing.
-        run: npm publish --access public
+        #
+        # Idempotency: skip cleanly if this version is already on npm so
+        # re-tagging the same version (e.g. to regenerate VT scan links
+        # in the release body) doesn't break the workflow.
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "kobsidian-mcp@$VERSION" version > /dev/null 2>&1; then
+            echo "kobsidian-mcp@$VERSION already on npm; skipping publish."
+            exit 0
+          fi
+          npm publish --access public
