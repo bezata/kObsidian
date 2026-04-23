@@ -12,7 +12,13 @@ import {
 } from "../../domain/api-tools.js";
 import { notePathSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema } from "../tool-schemas.js";
+import {
+  DESTRUCTIVE_OPEN_WORLD,
+  OPEN_WORLD,
+  READ_ONLY_OPEN_WORLD,
+  listResultSchema,
+  looseObjectSchema,
+} from "../tool-schemas.js";
 
 export const apiTools: ToolDefinition[] = [
   {
@@ -21,6 +27,7 @@ export const apiTools: ToolDefinition[] = [
     description: "Get the currently active file in Obsidian.",
     inputSchema: z.object({}),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context) => getActiveFile(context),
   },
   {
@@ -29,6 +36,7 @@ export const apiTools: ToolDefinition[] = [
     description: "Open a file in Obsidian.",
     inputSchema: z.object({ filePath: notePathSchema, newPane: z.boolean().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: OPEN_WORLD,
     handler: (context, args) => openFile(context, args as Parameters<typeof openFile>[1]),
   },
   {
@@ -37,6 +45,7 @@ export const apiTools: ToolDefinition[] = [
     description: "Close the active file in Obsidian.",
     inputSchema: z.object({}),
     outputSchema: looseObjectSchema,
+    annotations: OPEN_WORLD,
     handler: (context) => closeActiveFile(context),
   },
   {
@@ -45,6 +54,7 @@ export const apiTools: ToolDefinition[] = [
     description: "Go back in Obsidian history.",
     inputSchema: z.object({}),
     outputSchema: looseObjectSchema,
+    annotations: OPEN_WORLD,
     handler: (context) => navigateBack(context),
   },
   {
@@ -53,6 +63,7 @@ export const apiTools: ToolDefinition[] = [
     description: "Go forward in Obsidian history.",
     inputSchema: z.object({}),
     outputSchema: looseObjectSchema,
+    annotations: OPEN_WORLD,
     handler: (context) => navigateForward(context),
   },
   {
@@ -61,6 +72,7 @@ export const apiTools: ToolDefinition[] = [
     description: "Toggle edit/preview mode in Obsidian.",
     inputSchema: z.object({}),
     outputSchema: looseObjectSchema,
+    annotations: OPEN_WORLD,
     handler: (context) => toggleEditMode(context),
   },
   {
@@ -72,6 +84,7 @@ export const apiTools: ToolDefinition[] = [
       args: z.record(z.string(), z.unknown()).optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: DESTRUCTIVE_OPEN_WORLD,
     handler: (context, args) =>
       executeCommand(context, args as Parameters<typeof executeCommand>[1]),
   },
@@ -81,6 +94,7 @@ export const apiTools: ToolDefinition[] = [
     description: "List all available Obsidian commands.",
     inputSchema: z.object({}),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context) => listCommands(context),
   },
   {
@@ -89,6 +103,7 @@ export const apiTools: ToolDefinition[] = [
     description: "Search Obsidian commands by ID or name.",
     inputSchema: z.object({ query: z.string().min(1) }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context, args) =>
       searchCommands(context, args as Parameters<typeof searchCommands>[1]),
   },

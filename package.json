@@ -4,6 +4,10 @@
   "private": true,
   "description": "TypeScript + Bun MCP server for Obsidian with hybrid filesystem and API-backed tools.",
   "type": "module",
+  "mcpName": "io.github.behzatcan/kobsidian",
+  "mcp": {
+    "protocolVersion": "2025-11-25"
+  },
   "engines": {
     "bun": ">=1.2.15"
   },
@@ -15,6 +19,8 @@
     "dev:stdio": "bun run src/server/stdio.ts",
     "dev:http": "bun run src/server/http.ts",
     "build": "bun build src/server/stdio.ts --target bun --outdir dist/server && bun build src/server/http.ts --target bun --outdir dist/server",
+    "build:compile": "bun build src/server/stdio.ts --compile --target bun --outfile dist/kobsidian",
+    "bundle:mcpb": "bun run build && bun run scripts/make-mcpb.mjs",
     "inventory": "bun run src/server/generate-tool-inventory.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

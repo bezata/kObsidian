@@ -14,7 +14,16 @@ import {
 import { createNoteFromTemplate, expandTemplate, listTemplates } from "../../domain/templates.js";
 import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  DESTRUCTIVE,
+  IDEMPOTENT,
+  OPEN_WORLD,
+  READ_ONLY,
+  READ_ONLY_OPEN_WORLD,
+  listResultSchema,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 export const templateAndCanvasTools: ToolDefinition[] = [
   {
@@ -28,6 +37,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       expandTemplate(context, args as Parameters<typeof expandTemplate>[1]),
   },
@@ -54,6 +64,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => listTemplates(context, args as Parameters<typeof listTemplates>[1]),
   },
   {
@@ -62,6 +73,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
     description: "Render a Templater template via the Obsidian API.",
     inputSchema: z.object({ templateFile: z.string().min(1), targetFile: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context, args) =>
       renderTemplaterTemplate(context, args as Parameters<typeof renderTemplaterTemplate>[1]),
   },
@@ -75,6 +87,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
       openFile: z.boolean().optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: OPEN_WORLD,
     handler: (context, args) =>
       createNoteFromTemplater(context, args as Parameters<typeof createNoteFromTemplater>[1]),
   },
@@ -84,6 +97,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
     description: "Insert a Templater template into the active note.",
     inputSchema: z.object({ templateFile: z.string().min(1), activeFile: z.boolean().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: OPEN_WORLD,
     handler: (context, args) =>
       insertTemplaterTemplate(context, args as Parameters<typeof insertTemplaterTemplate>[1]),
   },
@@ -93,6 +107,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
     description: "Parse an Obsidian canvas file.",
     inputSchema: z.object({ filePath: z.string().min(1), vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => parseCanvas(context, args as Parameters<typeof parseCanvas>[1]),
   },
   {
@@ -110,6 +125,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) => addCanvasNode(context, args as Parameters<typeof addCanvasNode>[1]),
   },
   {
@@ -124,6 +140,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) => addCanvasEdge(context, args as Parameters<typeof addCanvasEdge>[1]),
   },
   {
@@ -136,6 +153,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: DESTRUCTIVE,
     handler: (context, args) =>
       removeCanvasNode(context, args as Parameters<typeof removeCanvasNode>[1]),
   },
@@ -149,6 +167,7 @@ export const templateAndCanvasTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       getCanvasNodeConnections(context, args as Parameters<typeof getCanvasNodeConnections>[1]),
   },

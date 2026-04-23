@@ -17,7 +17,13 @@ import {
   wikiSummaryMergeArgsSchema,
 } from "../../schema/wiki.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  IDEMPOTENT,
+  IDEMPOTENT_DESTRUCTIVE,
+  READ_ONLY,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 export const wikiTools: ToolDefinition[] = [
   {
@@ -27,6 +33,7 @@ export const wikiTools: ToolDefinition[] = [
       "Scaffold the wiki layout: Sources/, Concepts/, Entities/ folders plus seed index.md, log.md, and wiki-schema.md. Idempotent; use force:true to re-seed index/log/schema files.",
     inputSchema: wikiInitArgsSchema,
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) => initWiki(context, args as Parameters<typeof initWiki>[1]),
   },
   {
@@ -55,6 +62,7 @@ export const wikiTools: ToolDefinition[] = [
       "Regenerate the wiki index.md from the current state of Sources/, Concepts/, and Entities/. Groups entries by category; supports optional per-category counts.",
     inputSchema: wikiIndexRebuildArgsSchema,
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT_DESTRUCTIVE,
     handler: (context, args) => rebuildIndex(context, args as Parameters<typeof rebuildIndex>[1]),
   },
   {
@@ -64,6 +72,7 @@ export const wikiTools: ToolDefinition[] = [
       "Rank wiki pages relevant to a topic using filename, alias, tag, summary and body hits. Returns the top pages so the LLM can drill in with notes.read.",
     inputSchema: wikiQueryArgsSchema,
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => queryWiki(context, args as Parameters<typeof queryWiki>[1]),
   },
   {
@@ -73,6 +82,7 @@ export const wikiTools: ToolDefinition[] = [
       "Health-check the wiki: orphans, broken links, stale sources, missing concept pages, singleton tags, and index.md parity. Read-only; returns grouped findings with totals.",
     inputSchema: wikiLintArgsSchema,
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) => lintWiki(context, args as Parameters<typeof lintWiki>[1]),
   },
   {

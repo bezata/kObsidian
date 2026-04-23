@@ -18,7 +18,14 @@ import {
 } from "../../domain/dataview.js";
 import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  IDEMPOTENT,
+  READ_ONLY,
+  READ_ONLY_OPEN_WORLD,
+  listResultSchema,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 export const dataviewTools: ToolDefinition[] = [
   {
@@ -27,6 +34,7 @@ export const dataviewTools: ToolDefinition[] = [
     description: "Read page, list-item, task, DQL, and DataviewJS metadata from a note.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       readDataviewIndex(context, args as Parameters<typeof readDataviewIndex>[1]),
   },
@@ -36,6 +44,7 @@ export const dataviewTools: ToolDefinition[] = [
     description: "Extract scoped Dataview fields from a note.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       extractDataviewFieldsFromFile(
         context,
@@ -54,6 +63,7 @@ export const dataviewTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       searchByDataviewField(context, args as Parameters<typeof searchByDataviewField>[1]),
   },
@@ -96,6 +106,7 @@ export const dataviewTools: ToolDefinition[] = [
     description: "Extract fenced dataview DQL blocks from a note.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       readDataviewQueryBlocks(context, args as Parameters<typeof readDataviewQueryBlocks>[1]),
   },
@@ -111,6 +122,7 @@ export const dataviewTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) =>
       updateDataviewQueryBlock(context, args as Parameters<typeof updateDataviewQueryBlock>[1]),
   },
@@ -120,6 +132,7 @@ export const dataviewTools: ToolDefinition[] = [
     description: "Extract fenced dataviewjs blocks from a note without executing them.",
     inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       readDataviewJsBlocks(context, args as Parameters<typeof readDataviewJsBlocks>[1]),
   },
@@ -135,6 +148,7 @@ export const dataviewTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) =>
       updateDataviewJsBlock(context, args as Parameters<typeof updateDataviewJsBlock>[1]),
   },
@@ -144,6 +158,7 @@ export const dataviewTools: ToolDefinition[] = [
     description: "Execute a Dataview Query Language (DQL) query through the Obsidian API.",
     inputSchema: z.object({ query: z.string().min(1) }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context, args) =>
       executeDataviewQuery(context, args as Parameters<typeof executeDataviewQuery>[1]),
   },
@@ -158,6 +173,7 @@ export const dataviewTools: ToolDefinition[] = [
       limit: positiveIntSchema.optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context, args) =>
       listNotesByTagDql(context, args as Parameters<typeof listNotesByTagDql>[1]),
   },
@@ -172,6 +188,7 @@ export const dataviewTools: ToolDefinition[] = [
       limit: positiveIntSchema.optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context, args) =>
       listNotesByFolderDql(context, args as Parameters<typeof listNotesByFolderDql>[1]),
   },
@@ -187,6 +204,7 @@ export const dataviewTools: ToolDefinition[] = [
       limit: positiveIntSchema.optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY_OPEN_WORLD,
     handler: (context, args) => tableQueryDql(context, args as Parameters<typeof tableQueryDql>[1]),
   },
 ];

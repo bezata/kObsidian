@@ -28,6 +28,14 @@ describe("server integration", () => {
     const tools = await client.listTools();
     expect(tools.tools.some((tool) => tool.name === "notes.read")).toBe(true);
 
+    const byName = new Map(tools.tools.map((tool) => [tool.name, tool]));
+    expect(byName.get("notes.read")?.annotations?.readOnlyHint).toBe(true);
+    expect(byName.get("notes.delete")?.annotations?.destructiveHint).toBe(true);
+    expect(byName.get("wiki.init")?.annotations?.idempotentHint).toBe(true);
+    expect(byName.get("wiki.indexRebuild")?.annotations?.destructiveHint).toBe(true);
+    expect(byName.get("wiki.indexRebuild")?.annotations?.idempotentHint).toBe(true);
+    expect(byName.get("commands.execute")?.annotations?.openWorldHint).toBe(true);
+
     const result = await client.callTool({
       name: "notes.read",
       arguments: { path: "note1.md" },

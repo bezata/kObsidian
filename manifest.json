@@ -1,0 +1,57 @@
+{
+  "manifest_version": "0.2",
+  "name": "kobsidian",
+  "display_name": "kObsidian",
+  "version": "3.0.0",
+  "description": "Filesystem-first MCP server for Obsidian vaults with an LLM-Wiki layer.",
+  "long_description": "kObsidian exposes 90+ MCP tools across notes, links, tags, tasks, Dataview, Canvas, Kanban, Mermaid, Marp, Templates, and an LLM-Wiki orchestration namespace (wiki.init, wiki.ingest, wiki.query, wiki.lint, etc.). It operates directly on the vault filesystem and optionally bridges to the Obsidian Local REST API plugin for workspace/command actions.",
+  "author": {
+    "name": "Behzat Can Acele",
+    "email": "behzatcnacle@gmail.com"
+  },
+  "homepage": "https://github.com/behzatcan/kObsidian",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/behzatcan/kObsidian"
+  },
+  "license": "MIT",
+  "keywords": ["obsidian", "mcp", "markdown", "wiki", "knowledge-base", "dataview", "bun"],
+  "server": {
+    "type": "binary",
+    "entry_point": "dist/kobsidian",
+    "mcp_config": {
+      "command": "${__dirname}/dist/kobsidian",
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "${user_config.vault_path}",
+        "OBSIDIAN_API_URL": "${user_config.api_url}",
+        "OBSIDIAN_REST_API_KEY": "${user_config.rest_api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "vault_path": {
+      "type": "directory",
+      "title": "Obsidian vault path",
+      "description": "Absolute path to the Obsidian vault kObsidian should operate on.",
+      "required": true
+    },
+    "api_url": {
+      "type": "string",
+      "title": "Obsidian Local REST API URL",
+      "description": "Base URL of the Obsidian Local REST API plugin. Leave blank unless you've changed the default port.",
+      "default": "https://127.0.0.1:27124",
+      "required": false
+    },
+    "rest_api_key": {
+      "type": "string",
+      "title": "Obsidian Local REST API key",
+      "description": "Bearer key for the Obsidian Local REST API plugin. Required only if you use workspace.* or commands.* tools.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "linux", "win32"]
+  }
+}

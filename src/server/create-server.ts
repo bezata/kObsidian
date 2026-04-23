@@ -48,6 +48,7 @@ export function createServer(context: DomainContext = createDomainContext()) {
         description: tool.description,
         inputSchema: tool.inputSchema ?? z.object({}),
         outputSchema: tool.outputSchema,
+        ...(tool.annotations ? { annotations: tool.annotations } : {}),
       },
       async (args) => {
         try {

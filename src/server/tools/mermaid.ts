@@ -2,7 +2,13 @@ import { z } from "zod";
 import { listMermaidBlocks, readMermaidBlock, updateMermaidBlock } from "../../domain/mermaid.js";
 import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
 import type { ToolDefinition } from "../tool-definition.js";
-import { listResultSchema, looseObjectSchema, mutationResultSchema } from "../tool-schemas.js";
+import {
+  IDEMPOTENT,
+  READ_ONLY,
+  listResultSchema,
+  looseObjectSchema,
+  mutationResultSchema,
+} from "../tool-schemas.js";
 
 export const mermaidTools: ToolDefinition[] = [
   {
@@ -14,6 +20,7 @@ export const mermaidTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: listResultSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       listMermaidBlocks(context, args as Parameters<typeof listMermaidBlocks>[1]),
   },
@@ -28,6 +35,7 @@ export const mermaidTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
     handler: (context, args) =>
       readMermaidBlock(context, args as Parameters<typeof readMermaidBlock>[1]),
   },
@@ -43,6 +51,7 @@ export const mermaidTools: ToolDefinition[] = [
       vaultPath: z.string().optional(),
     }),
     outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT,
     handler: (context, args) =>
       updateMermaidBlock(context, args as Parameters<typeof updateMermaidBlock>[1]),
   },
