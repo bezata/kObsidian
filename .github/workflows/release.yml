@@ -132,46 +132,193 @@ jobs:
           fi
           echo "VirusTotal analysis: $VT_ANALYSIS"
 
-      - name: Append VirusTotal links to release body
-        # Two issues we work around here:
+      - name: Fetch VT verdicts and append to release body
+        # Two fixes rolled into one step:
         #
         # 1. `update_release_body: true` on the VT action only fires when
         #    triggered by `release: published`; on `push: tags` it reads
         #    an empty `github.context.payload.release` and silently skips.
         # 2. The VT action's `analysis` output uses
         #    `/gui/file-analysis/<id>/detection` URLs that are **temporary**
-        #    — once the scan finishes those pages 404 with "The page you
-        #    navigated to does not exist". The permanent public report
-        #    lives at `/gui/file/<sha256>`.
+        #    — the pages 404 once analysis completes. We want permanent
+        #    `/gui/file/<sha256>` links *plus* the actual verdict.
         #
-        # So: compute SHA256 for every bundle, link to the permanent
-        # hash URL, and rewrite the release body ourselves.
+        # Flow: for each bundle, compute SHA-256 → poll VT's `/api/v3/
+        # files/<sha256>` (with backoff up to ~5 min) for completed
+        # analysis stats → render a verdict line (✅ Clean / ⚠️ N
+        # malicious / … · N/T engines · permanent link · sha256). Fail
+        # the job if any file has `malicious > 0`.
         env:
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          # Write the VT block to /tmp/vt-block.md with stable hash URLs.
+          set -euo pipefail
+          any_malicious=0
+          any_suspicious=0
+
           {
             echo
             echo
-            echo "🛡 **VirusTotal analysis**"
+            echo "## 🛡 VirusTotal analysis"
             echo
-            echo "_Permanent file reports (by SHA-256). Indexing may take a few minutes after release._"
+            echo "Every \`.mcpb\` bundle in this release was uploaded to [VirusTotal](https://www.virustotal.com) by GitHub Actions and scanned by 70+ antivirus engines. Click any row for the full report."
+            echo
+            echo "| Bundle | Verdict | Engines | SHA-256 |"
+            echo "|---|---|---|---|"
+          } > /tmp/vt-block.md
+
+          for file in release/*.mcpb; do
+            sha=$(sha256sum "$file" | awk '{print $1}')
+            name=$(basename "$file")
+            report_url="https://www.virustotal.com/gui/file/${sha}"
+
+            # Poll /files/<sha256> until we see completed analysis stats.
+            # First scan can take 1-5 min; total wait cap ≈ 5 min.
+            stats=""
+            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+              resp=$(curl -sf -H "x-apikey: ${VT_API_KEY}" \
+                "https://www.virustotal.com/api/v3/files/${sha}" || true)
+              stats=$(printf '%s' "$resp" | jq -c '.data.attributes.last_analysis_stats // empty' 2>/dev/null || echo "")
+              if [ -n "$stats" ] && [ "$stats" != "null" ]; then
+                break
+              fi
+              echo "[${name}] waiting for VT analysis (attempt ${attempt}/10) …"
+              sleep 30
+            done
+
+            if [ -z "$stats" ] || [ "$stats" = "null" ]; then
+              verdict="⏳ Pending"
+              engines="—"
+              echo "::warning::VT analysis for ${name} not yet available; release body shows 'Pending'."
+            else
+              malicious=$(printf '%s' "$stats" | jq -r '.malicious // 0')
+              suspicious=$(printf '%s' "$stats" | jq -r '.suspicious // 0')
+              undetected=$(printf '%s' "$stats" | jq -r '.undetected // 0')
+              harmless=$(printf '%s' "$stats" | jq -r '.harmless // 0')
+              timeout=$(printf '%s' "$stats" | jq -r '.timeout // 0')
+              total=$((malicious + suspicious + undetected + harmless + timeout))
+
+              if [ "$malicious" -gt 0 ]; then
+                verdict="⚠️ **${malicious} malicious**"
+                any_malicious=1
+              elif [ "$suspicious" -gt 0 ]; then
+                verdict="⚠️ ${suspicious} suspicious"
+                any_suspicious=1
+              else
+                verdict="✅ Clean"
+              fi
+              clean=$((undetected + harmless))
+              engines="${clean}/${total}"
+            fi
+
+            short_sha="${sha:0:12}…"
+            echo "| [\`${name}\`](${report_url}) | ${verdict} | ${engines} clean | \`${short_sha}\` |" \
+              >> /tmp/vt-block.md
+          done
+
+          {
+            echo
+            echo "<details><summary>Full SHA-256 hashes</summary>"
             echo
             for file in release/*.mcpb; do
               sha=$(sha256sum "$file" | awk '{print $1}')
               name=$(basename "$file")
-              echo "- [\`${name}\`](https://www.virustotal.com/gui/file/${sha}) — \`sha256:${sha}\`"
+              echo "- \`${name}\` — \`${sha}\`"
             done
-          } > /tmp/vt-block.md
+            echo
+            echo "</details>"
+          } >> /tmp/vt-block.md
+
           echo "=== VT block ==="
           cat /tmp/vt-block.md
 
           # Preserve existing body (if any) and append.
-          gh release view "$RELEASE_TAG" --json body --jq '.body' > /tmp/body-current.md 2>/dev/null || true
+          gh release view "$RELEASE_TAG" --json body --jq '.body' \
+            > /tmp/body-current.md 2>/dev/null || true
           cat /tmp/body-current.md /tmp/vt-block.md > /tmp/body-final.md
           gh release edit "$RELEASE_TAG" --notes-file /tmp/body-final.md
           echo "Release body updated."
+
+          # Export flags for the badge-update step.
+          {
+            echo "VT_ANY_MALICIOUS=${any_malicious}"
+            echo "VT_ANY_SUSPICIOUS=${any_suspicious}"
+          } >> "$GITHUB_ENV"
+
+          if [ "$any_malicious" -eq 1 ]; then
+            echo "::error::One or more bundles flagged as malicious by VirusTotal — blocking release."
+            exit 1
+          fi
+          if [ "$any_suspicious" -eq 1 ]; then
+            echo "::warning::One or more bundles flagged as suspicious by VirusTotal — review the release body."
+          fi
+
+      - name: Update VirusTotal shields.io endpoint badge
+        # Writes .github/badges/virustotal.json so the README's
+        # dynamic badge (https://img.shields.io/endpoint?url=…) reflects
+        # the latest release's verdict. No checkout needed — we use
+        # `gh api` to PUT the file via the Contents API.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          if [ "${VT_ANY_MALICIOUS:-0}" = "1" ]; then
+            message="malicious detection ⚠"
+            color="critical"
+          elif [ "${VT_ANY_SUSPICIOUS:-0}" = "1" ]; then
+            message="suspicious ⚠"
+            color="yellow"
+          else
+            # Count bundles from the release/*.mcpb directory populated
+            # by the earlier download-artifact step.
+            count=$(ls release/*.mcpb 2>/dev/null | wc -l | tr -d ' ')
+            message="clean · ${count}/${count} bundles · ${RELEASE_TAG}"
+            color="brightgreen"
+          fi
+
+          cat > /tmp/vt-badge.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "VirusTotal",
+            "message": "${message}",
+            "color": "${color}",
+            "namedLogo": "virustotal",
+            "logoColor": "white",
+            "cacheSeconds": 300
+          }
+          EOF
+
+          content_b64=$(base64 -w0 /tmp/vt-badge.json)
+          badge_path=".github/badges/virustotal.json"
+
+          # Look up the current SHA (required by the Contents API to
+          # update an existing file). Empty if the file doesn't exist
+          # yet — Contents API treats a missing `sha` as "create".
+          current_sha=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/contents/${badge_path}?ref=main" \
+            --jq '.sha' 2>/dev/null || echo "")
+
+          if [ -n "$current_sha" ]; then
+            gh api "repos/${GITHUB_REPOSITORY}/contents/${badge_path}" \
+              --method PUT \
+              -f message="chore(badges): update VirusTotal status for ${RELEASE_TAG}" \
+              -f content="${content_b64}" \
+              -f branch="main" \
+              -f sha="${current_sha}" \
+              > /dev/null
+          else
+            gh api "repos/${GITHUB_REPOSITORY}/contents/${badge_path}" \
+              --method PUT \
+              -f message="chore(badges): create VirusTotal badge for ${RELEASE_TAG}" \
+              -f content="${content_b64}" \
+              -f branch="main" \
+              > /dev/null
+          fi
+          echo "VT shields endpoint updated: ${badge_path}"
+          cat /tmp/vt-badge.json
 
   npm-publish:
     name: Publish to npm

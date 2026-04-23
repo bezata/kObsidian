@@ -23,7 +23,7 @@ You curate the sources; the LLM does the bookkeeping.
 
 [![Smithery](https://img.shields.io/badge/Smithery-listed-8b5cf6)](https://smithery.ai)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-10b981)](https://registry.modelcontextprotocol.io)
-[![VirusTotal](https://img.shields.io/badge/release_scan-VirusTotal-brightgreen)](https://github.com/bezata/kObsidian/releases/latest)
+[![VirusTotal](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbezata%2FkObsidian%2Fmain%2F.github%2Fbadges%2Fvirustotal.json)](https://github.com/bezata/kObsidian/releases/latest)
 
 <br />
 

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "label": "VirusTotal",
+  "message": "pending first scanned release",
+  "color": "lightgrey",
+  "namedLogo": "virustotal",
+  "logoColor": "white",
+  "cacheSeconds": 300
+}
