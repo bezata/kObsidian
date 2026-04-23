@@ -218,10 +218,12 @@ Plus three server-side prompts that mirror the Claude Code skills at
 
 ## Related reading
 
-- **Vannevar Bush, "As We May Think" (1945)** — the Memex is the ancestor
-  of this pattern: private, curated, with associative trails between
-  documents as the primary artifact.
-- **LLM Wiki pattern** — this project's CLAUDE.md was drafted from Shawn
-  Wang's description of the pattern. The key insight: maintenance cost is
-  what kills wikis, and maintenance is exactly the kind of work LLMs are
-  excellent at.
+- **LLM Wiki pattern** — [Andrej Karpathy](https://github.com/karpathy).
+  The key insight: maintenance cost is what kills wikis, and maintenance
+  is exactly the kind of work LLMs are excellent at. kObsidian is one
+  concrete implementation of the idea: filesystem-first, TypeScript,
+  MCP-native, and strictly human-in-the-loop for cross-reference edits
+  via `proposedEdits`.
+- **Vannevar Bush, ["As We May Think" (1945)](https://www.theatlantic.com/magazine/archive/1945/07/as-we-may-think/303881/)**
+  — the Memex is the ancestor of this pattern: private, curated, with
+  associative trails between documents as the primary artifact.
