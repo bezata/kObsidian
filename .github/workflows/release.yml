@@ -57,7 +57,7 @@ jobs:
           KOBSIDIAN_BUNDLE_PLATFORM: ${{ matrix.platform }}
           KOBSIDIAN_BUNDLE_OUTPUT: release/kobsidian-${{ matrix.platform }}.mcpb
         run: bun run scripts/make-mcpb.mjs
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: kobsidian-${{ matrix.platform }}
           path: |
@@ -71,11 +71,11 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           fail_on_unmatched_files: true
           files: |
@@ -95,7 +95,7 @@ jobs:
       # archive's own `release/...` prefix would produce
       # `release/release/*.mcpb` and make the VT regex below miss.
       - name: Download .mcpb bundles from build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           pattern: kobsidian-*
           merge-multiple: true
@@ -106,6 +106,7 @@ jobs:
           echo "=== all .mcpb ==="
           find . -name '*.mcpb' -type f 2>/dev/null
       - name: Scan .mcpb bundles
+        id: vt
         uses: crazy-max/ghaction-virustotal@v4
         with:
           vt_api_key: ${{ secrets.VT_API_KEY }}
@@ -117,6 +118,19 @@ jobs:
           # misleading; the `$` is literal in glob. Use a real glob.
           files: |
             release/*.mcpb
+      - name: Fail if VirusTotal scanned nothing
+        # The VT action emits a non-fatal warning when no files matched
+        # its glob, which left the analysis output empty and the release
+        # body unchanged. Treat that as a hard failure so we never ship
+        # without confirmation that the bundles were actually scanned.
+        env:
+          VT_ANALYSIS: ${{ steps.vt.outputs.analysis }}
+        run: |
+          if [ -z "$VT_ANALYSIS" ]; then
+            echo "::error::VirusTotal scan produced no analysis output — check the files glob or the download step."
+            exit 1
+          fi
+          echo "VirusTotal analysis: $VT_ANALYSIS"
 
   npm-publish:
     name: Publish to npm

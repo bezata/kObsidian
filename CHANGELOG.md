@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-04-23
+
+CI pipeline hardening + action upgrades. No source or tool-surface
+changes from 0.1.0 — this release exists to verify the full release
+pipeline (all 5 `.mcpb` cross-platform bundles, VirusTotal scan
+attached to the release body, npm Trusted Publishing) end-to-end.
+
+### Changed
+
+- **`actions/upload-artifact` v5 → v7** — native Node 24, silences the
+  Node 20 deprecation warning.
+- **`actions/download-artifact` v5 → v8** — same reason, and the v8
+  default path handling avoided the nested `release/release/*.mcpb`
+  quirk that had made VT's glob miss files in 0.1.0.
+- **`softprops/action-gh-release` v2 → v3**.
+
+### Fixed
+
+- **VirusTotal `files:` pattern** — the action's input goes through
+  `glob.sync()`, not a regex engine. The previous
+  `release/.*\.mcpb$` pattern matched zero files. Switched to a real
+  glob `release/*.mcpb`.
+- **VT-as-no-op silently succeeded** — the workflow now explicitly
+  fails when `ghaction-virustotal` emits an empty `analysis` output,
+  so a mis-configured scan never ships unnoticed.
+- **`npm-publish` is now idempotent** — re-tagging an already-
+  published version no longer fails the workflow. The publish step
+  probes `npm view kobsidian-mcp@<version>` first and exits cleanly
+  if the version already exists on npm.
+
+[Unreleased]: https://github.com/bezata/kObsidian/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/bezata/kObsidian/compare/v0.1.0...v0.1.1
+
 ## [0.1.0] — 2026-04-23
 
 Initial public release. kObsidian lands on npm as `kobsidian-mcp@0.1.0`
@@ -133,5 +166,4 @@ Four skills at `skills/` trigger on natural language:
   compliance (CORS preflight / protocol version / origin 403),
   resource + prompt integration, full stdio E2E.
 
-[Unreleased]: https://github.com/bezata/kObsidian/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/bezata/kObsidian/releases/tag/v0.1.0
