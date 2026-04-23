@@ -107,6 +107,13 @@ jobs:
           find . -name '*.mcpb' -type f 2>/dev/null
       - name: Scan .mcpb bundles
         id: vt
+        # `continue-on-error: true` because the action fails hard with
+        # `AxiosError: status code 409` when VT already has a file with
+        # the same SHA-256 (our rebuilds produce byte-identical
+        # binaries, and VT rejects duplicate uploads). That's fine —
+        # the next step polls `/api/v3/files/<sha>` directly, which
+        # returns the existing analysis regardless of who uploaded it.
+        continue-on-error: true
         uses: crazy-max/ghaction-virustotal@v4
         with:
           vt_api_key: ${{ secrets.VT_API_KEY }}
@@ -118,19 +125,16 @@ jobs:
           # misleading; the `$` is literal in glob. Use a real glob.
           files: |
             release/*.mcpb
-      - name: Fail if VirusTotal scanned nothing
-        # The VT action emits a non-fatal warning when no files matched
-        # its glob, which left the analysis output empty and the release
-        # body unchanged. Treat that as a hard failure so we never ship
-        # without confirmation that the bundles were actually scanned.
-        env:
-          VT_ANALYSIS: ${{ steps.vt.outputs.analysis }}
+      - name: Sanity-check VT upload step
+        # The action can return 409 per-file when VT already has a
+        # bundle with the same SHA-256 (marked `continue-on-error`
+        # above). Log its final state but don't fail — the next step
+        # polls VT directly by SHA-256 and is authoritative.
+        if: always()
         run: |
-          if [ -z "$VT_ANALYSIS" ]; then
-            echo "::error::VirusTotal scan produced no analysis output — check the files glob or the download step."
-            exit 1
-          fi
-          echo "VirusTotal analysis: $VT_ANALYSIS"
+          echo "VT action outcome: ${{ steps.vt.outcome }}"
+          echo "VT action conclusion: ${{ steps.vt.conclusion }}"
+          echo "analysis output:     '${{ steps.vt.outputs.analysis }}'"
 
       - name: Fetch VT verdicts and append to release body
         # Two fixes rolled into one step:
@@ -156,6 +160,8 @@ jobs:
           set -euo pipefail
           any_malicious=0
           any_suspicious=0
+          pending_count=0
+          bundle_count=0
 
           {
             echo
@@ -169,6 +175,7 @@ jobs:
           } > /tmp/vt-block.md
 
           for file in release/*.mcpb; do
+            bundle_count=$((bundle_count + 1))
             sha=$(sha256sum "$file" | awk '{print $1}')
             name=$(basename "$file")
             report_url="https://www.virustotal.com/gui/file/${sha}"
@@ -201,6 +208,7 @@ jobs:
             if [ "$total" -eq 0 ]; then
               verdict="⏳ Pending"
               engines="pending"
+              pending_count=$((pending_count + 1))
               echo "::warning::VT analysis for ${name} not completed within poll budget; release body shows 'Pending'."
             else
               if [ "$malicious" -gt 0 ]; then
@@ -251,6 +259,8 @@ jobs:
           {
             echo "VT_ANY_MALICIOUS=${any_malicious}"
             echo "VT_ANY_SUSPICIOUS=${any_suspicious}"
+            echo "VT_PENDING_COUNT=${pending_count}"
+            echo "VT_BUNDLE_COUNT=${bundle_count}"
           } >> "$GITHUB_ENV"
 
           if [ "$any_malicious" -eq 1 ]; then
@@ -259,6 +269,10 @@ jobs:
           fi
           if [ "$any_suspicious" -eq 1 ]; then
             echo "::warning::One or more bundles flagged as suspicious by VirusTotal — review the release body."
+          fi
+          if [ "$pending_count" -eq "$bundle_count" ] && [ "$bundle_count" -gt 0 ]; then
+            echo "::error::All ${bundle_count} bundles timed out as 'Pending' — VT never returned stats for any file. Investigate rate-limits or API connectivity before shipping."
+            exit 1
           fi
 
       - name: Update VirusTotal shields.io endpoint badge
@@ -279,11 +293,16 @@ jobs:
             message="suspicious ⚠"
             color="yellow"
           else
-            # Count bundles from the release/*.mcpb directory populated
-            # by the earlier download-artifact step.
-            count=$(ls release/*.mcpb 2>/dev/null | wc -l | tr -d ' ')
-            message="clean · ${count}/${count} bundles · ${RELEASE_TAG}"
-            color="brightgreen"
+            total="${VT_BUNDLE_COUNT:-0}"
+            pending="${VT_PENDING_COUNT:-0}"
+            clean=$((total - pending))
+            if [ "$pending" -gt 0 ]; then
+              message="clean · ${clean}/${total} scanned · ${RELEASE_TAG}"
+              color="green"
+            else
+              message="clean · ${total}/${total} bundles · ${RELEASE_TAG}"
+              color="brightgreen"
+            fi
           fi
 
           cat > /tmp/vt-badge.json <<EOF
