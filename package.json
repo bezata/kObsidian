@@ -1,9 +1,9 @@
 {
-  "name": "kobsidian",
+  "name": "kobsidian-mcp",
   "version": "3.1.0",
   "description": "TypeScript MCP server for Obsidian with a filesystem-first LLM Wiki layer, Dataview / Canvas / Kanban / Mermaid / Marp / Templates tools, and both stdio and Streamable HTTP transports.",
   "type": "module",
-  "mcpName": "io.github.behzatcan/kobsidian",
+  "mcpName": "io.github.bezata/kobsidian-mcp",
   "mcp": {
     "protocolVersion": "2025-11-25"
   },
@@ -22,21 +22,21 @@
   ],
   "author": "Behzat Can Acele <behzatcnacle@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/behzatcan/kObsidian",
+  "homepage": "https://github.com/bezata/kObsidian",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/behzatcan/kObsidian.git"
+    "url": "git+https://github.com/bezata/kObsidian.git"
   },
   "bugs": {
-    "url": "https://github.com/behzatcan/kObsidian/issues"
+    "url": "https://github.com/bezata/kObsidian/issues"
   },
   "engines": {
     "node": ">=20",
     "bun": ">=1.2.15"
   },
   "bin": {
-    "kobsidian": "./dist/server/stdio.js",
-    "kobsidian-http": "./dist/server/http.js"
+    "kobsidian-mcp": "./dist/server/stdio.js",
+    "kobsidian-mcp-http": "./dist/server/http.js"
   },
   "files": ["dist/**", "manifest.json", "server.json", "README.md", "LICENSE", "CHANGELOG.md"],
   "publishConfig": {

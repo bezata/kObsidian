@@ -48,7 +48,7 @@ Once published to npm:
   "mcpServers": {
     "kobsidian": {
       "command": "npx",
-      "args": ["-y", "kobsidian"],
+      "args": ["-y", "kobsidian-mcp"],
       "env": {
         "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
         "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
@@ -64,7 +64,7 @@ Once published to npm:
 ### Claude Desktop (.mcpb drag-and-drop)
 
 Download `kobsidian-<platform>.mcpb` from the
-[latest release](https://github.com/behzatcan/kObsidian/releases/latest)
+[latest release](https://github.com/bezata/kObsidian/releases/latest)
 and drag it into Claude Desktop. The installer prompts for vault path +
 optional API URL / key.
 
