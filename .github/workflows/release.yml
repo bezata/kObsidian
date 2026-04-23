@@ -107,11 +107,20 @@ jobs:
 
   npm-publish:
     name: Publish to npm
-    needs: build-bundles
+    # Wait for virustotal (on tag push) so we only publish after the
+    # bundles have been scanned clean. For workflow_dispatch,
+    # virustotal is skipped; the `always() + skipped tolerance` makes
+    # that path still publish.
+    needs: [build-bundles, virustotal]
     runs-on: ubuntu-latest
     if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_npm == 'true')
+      always() &&
+      needs.build-bundles.result == 'success' &&
+      (needs.virustotal.result == 'success' || needs.virustotal.result == 'skipped') &&
+      (
+        startsWith(github.ref, 'refs/tags/v') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_npm == 'true')
+      )
     permissions:
       contents: read
       id-token: write  # required for npm publish --provenance
