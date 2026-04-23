@@ -4,7 +4,7 @@
 
 **Filesystem-first MCP server for Obsidian vaults — with an LLM-Wiki layer on top.**
 
-_Inspired by [Andrej Karpathy's LLM Wiki idea](https://github.com/karpathy)._
+_Inspired by [Andrej Karpathy's **LLM Wiki**](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) idea._
 You curate the sources; the LLM does the bookkeeping.
 
 <br />
@@ -138,6 +138,105 @@ Full loop, frontmatter contracts, and the `proposedEdits` design in
 
 ---
 
+## Example use cases
+
+The same primitives cover several real-world flavors of knowledge base.
+Three worked examples below; longer walkthroughs in [`docs/examples.md`](docs/examples.md).
+
+### A. Personal research wiki
+
+```
+You: "Ingest this paper on in-context learning: <url or pasted markdown>"
+LLM:  wiki.ingest title="In-Context Learning — A Survey" sourceType=paper
+        tags=[icl, prompting] relatedConcepts=[In-Context Learning, Few-Shot Prompting]
+        relatedEntities=[Brown 2020]
+      → wiki/Sources/in-context-learning-a-survey.md
+      → proposedEdits:
+          • createStub  wiki/Concepts/in-context-learning.md
+          • createStub  wiki/Concepts/few-shot-prompting.md
+          • createStub  wiki/Entities/brown-2020.md
+          • insertAfterHeading  wiki/index.md#Sources
+      LLM applies each via notes.create / notes.insertAfterHeading.
+```
+
+### B. Architecture Decision Records (ADRs) for a codebase
+
+Model each ADR as a Source, architectural patterns as Concepts, and
+services / teams / libraries as Entities. The wiki becomes your ADR
+archive with cross-links you never have to maintain by hand.
+
+```
+You: "Record ADR-004: we're switching internal service comms from REST
+      to gRPC. Context: <paste>"
+LLM:  wiki.ingest title="ADR-004 — gRPC for internal service comms"
+        sourceType=note tags=[adr, architecture, rpc]
+        relatedConcepts=[gRPC, Service Mesh, Internal RPC]
+        relatedEntities=[order-service, payment-service, inventory-service]
+      → wiki/Sources/adr-004-grpc-for-internal-service-comms.md
+      → proposedEdits:
+          • createStub   wiki/Concepts/grpc.md
+          • createStub   wiki/Concepts/service-mesh.md
+          • insertAfterHeading  wiki/Entities/order-service.md#Notable Facts
+          • insertAfterHeading  wiki/Entities/payment-service.md#Notable Facts
+          • …
+
+Three weeks later —
+You: "Why did we pick gRPC for internal comms?"
+LLM:  wiki.query "grpc internal comms"
+      notes.read top matches
+      → "Per [[wiki/Sources/adr-004-grpc-for-internal-service-comms.md|ADR-004]],
+         chosen over REST because of native streaming + typed schemas; tradeoff
+         accepted: browser clients still use REST via an edge gateway
+         ([[wiki/Concepts/service-mesh.md]])."
+```
+
+### C. Codebase wiki (design docs + post-mortems + RFCs)
+
+Engineering teams abandon wikis because nobody updates them. Let the
+LLM do it. Ingest design docs, RFCs, and post-mortems as Sources;
+architectural patterns become Concepts; services and teams become
+Entities.
+
+```
+You: "We had an incident today — payment-service timeouts cascaded
+      into order-service. Here's the post-mortem: <paste>"
+LLM:  wiki.ingest title="Postmortem 2026-04-10 — Payment timeouts cascade"
+        sourceType=other tags=[postmortem, incident, reliability]
+        relatedConcepts=[Circuit Breaker, Cascade Failure, Timeout Budget]
+        relatedEntities=[payment-service, order-service]
+      → wiki/Sources/postmortem-2026-04-10-payment-timeouts-cascade.md
+      → proposedEdits:
+          • createStub  wiki/Concepts/circuit-breaker.md
+          • createStub  wiki/Concepts/cascade-failure.md
+          • insertAfterHeading  wiki/Entities/payment-service.md#Notable Facts
+          • insertAfterHeading  wiki/Entities/order-service.md#Notable Facts
+
+Periodic housekeeping —
+You: "Audit the codebase wiki."
+LLM:  wiki.lint
+      → 3 orphan RFCs (unlinked from any Concept; link or archive?)
+      → 1 broken link: [[wiki/Entities/legacy-auth-service.md]]
+        (deprecated in Q1; remove the link from
+         [[wiki/Sources/adr-002-session-migration.md]]?)
+      → 4 post-mortems past the 180-day stale threshold — tag with
+        "needs-review" or re-ingest with updated lessons-learned?
+      → 2 tag singletons: `retry-logic` (merge into `retry-policy`?),
+        `observability` (first use; keep).
+```
+
+**Why this works for engineering teams**
+
+- The `proposedEdits` contract means every cross-reference write is
+  visible in the transcript — no silent vault corruption from an LLM
+  hallucination about which services a decision affects.
+- The greppable log format (`## [YYYY-MM-DD] ingest | ADR-004 …`) makes
+  `grep '^## \[' wiki/log.md | tail -20` a valid "what did the team
+  decide recently" query.
+- `wiki.lint` surfaces broken links to services that were deprecated
+  months ago — the bookkeeping humans never get around to.
+
+---
+
 ## Architecture
 
 ```
@@ -196,12 +295,17 @@ Full module map in [`docs/architecture.md`](docs/architecture.md).
 > maintenance burden grows faster than the value. **LLMs don't get
 > bored.**
 
-kObsidian implements the **LLM Wiki** pattern —
-[Andrej Karpathy's idea](https://github.com/karpathy) of a persistent,
-compounding knowledge base the LLM maintains. The vault becomes a
+kObsidian implements the **LLM Wiki** pattern from
+[Andrej Karpathy's gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f):
+a persistent, compounding knowledge base the LLM maintains. The vault becomes a
 private, curated Memex (Vannevar Bush, 1945) where cross-references,
 log-keeping, and lint are the LLM's job while you focus on curating
 sources and asking questions.
+
+> "Instead of just retrieving from raw documents at query time, the LLM
+> incrementally builds and maintains a persistent wiki — a structured,
+> interlinked collection of markdown files that sits between you and the
+> raw sources." — Andrej Karpathy
 
 ```
               User drops a source
@@ -332,6 +436,7 @@ Every wiki tool also accepts a per-call `wikiRoot` override.
 |---|---|
 | [architecture.md](docs/architecture.md) | Stack, module map, layering rules |
 | [wiki.md](docs/wiki.md) | LLM-Wiki contract, loop, frontmatter, lint categories |
+| [examples.md](docs/examples.md) | Personal research wiki · engineering ADRs · codebase wiki — end-to-end |
 | [tools.md](docs/tools.md) | Namespace table, annotations, resources, prompts |
 | [SECURITY.md](docs/SECURITY.md) | Origin/CORS, VirusTotal scans, env hygiene |
 | [TESTING.md](docs/TESTING.md) | `bun run …` commands + coverage |
@@ -404,7 +509,7 @@ Full notes in [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## Credits
 
-- **LLM Wiki pattern** — [Andrej Karpathy](https://github.com/karpathy).
+- **LLM Wiki pattern** — [Andrej Karpathy's gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
   kObsidian is one concrete, filesystem-first TypeScript implementation
   of the idea.
 - **Memex** — Vannevar Bush, [_As We May Think_, 1945](https://www.theatlantic.com/magazine/archive/1945/07/as-we-may-think/303881/).
