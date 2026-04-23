@@ -89,6 +89,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Download .mcpb bundles from build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: release
+          pattern: kobsidian-*
+          merge-multiple: true
       - name: Scan .mcpb bundles
         uses: crazy-max/ghaction-virustotal@v4
         with:
@@ -97,7 +103,7 @@ jobs:
           update_release_body: true
           request_rate: 4
           files: |
-            \.mcpb$
+            release/.*\.mcpb$
 
   npm-publish:
     name: Publish to npm
