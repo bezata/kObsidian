@@ -41,6 +41,26 @@ and appends the analysis links to the GitHub release body. Any user
 installing from a GitHub release can click through to the public
 VirusTotal report for their platform's bundle before running it.
 
+### npm Trusted Publishing (OIDC)
+
+Releases to npm use **Trusted Publishing** — no long-lived `NPM_TOKEN`
+secret is stored in this repo. On every tag push, GitHub Actions mints
+a short-lived OIDC token (`id-token: write`) and the npm CLI exchanges
+it for a one-time publish token scoped to exactly this workflow.
+Provenance attestations are automatic.
+
+The trust relationship is established once with:
+
+```bash
+# run locally in the repo, authenticated with your npm web session
+npm trust github --file .github/workflows/release.yml --repo bezata/kObsidian
+```
+
+This records "npm publishes of `kobsidian-mcp` coming from
+`bezata/kObsidian` via `.github/workflows/release.yml` are trusted."
+Any other fork, branch, or workflow file cannot publish — the OIDC
+audience claim won't match.
+
 ### Pinned SDK version
 
 `@modelcontextprotocol/sdk` is pinned at `1.29.0` in the `dependencies`
