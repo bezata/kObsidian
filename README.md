@@ -481,10 +481,15 @@ Project conventions in [`AGENTS.md`](AGENTS.md).
   `GHSA-345p-7cg4-v4c7` (cross-client response leak) and
   `CVE-2026-0621` (UriTemplate ReDoS). This repo pins `1.29.0`.
 
-- **npm provenance.** The release workflow publishes with
-  `npm publish --provenance`, so every version on npm has a
-  cryptographically-linked build statement pointing at the exact
-  GitHub Actions run that produced it.
+- **npm Trusted Publishing.** No long-lived `NPM_TOKEN` is stored in the
+  repo. GitHub Actions mints a short-lived OIDC token on every tag push
+  and the npm CLI exchanges it for a one-time publish token scoped to
+  this exact workflow file (`.github/workflows/release.yml` on the
+  `bezata/kObsidian` repo). Provenance attestations are automatic — every
+  published version has a cryptographically-linked build statement
+  pointing at the exact Actions run that produced it. Forks, other
+  branches, or modified workflow files cannot publish — the OIDC
+  audience claim won't match.
 
 Full notes in [`docs/SECURITY.md`](docs/SECURITY.md).
 

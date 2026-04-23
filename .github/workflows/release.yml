@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_npm:
-        description: "Also publish to npm (needs NPM_TOKEN secret)"
+        description: "Also publish to npm (requires `npm trust github` registered for this repo + workflow file)"
         type: boolean
         default: false
 
@@ -42,7 +42,7 @@ jobs:
             bun_target: bun-windows-x64
             binary_name: kobsidian.exe
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -123,10 +123,10 @@ jobs:
       )
     permissions:
       contents: read
-      id-token: write  # required for npm publish --provenance
+      id-token: write  # mints the OIDC token for npm Trusted Publishing
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
@@ -138,7 +138,13 @@ jobs:
       - run: bun run lint
       - run: bun run test
       - run: bun run build
-      - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --provenance --access public
+      - name: Publish (npm Trusted Publishing via OIDC)
+        # No NODE_AUTH_TOKEN / NPM_TOKEN — the npm CLI automatically
+        # exchanges the GitHub Actions OIDC token for a short-lived
+        # npm publish token, provided:
+        #   1. Node.js >= 24 + npm >= 11
+        #   2. id-token: write permission on this job (set above)
+        #   3. A one-time `npm trust github --file .github/workflows/release.yml
+        #      --repo bezata/kObsidian` run locally to register the trust
+        # Provenance is automatic under Trusted Publishing.
+        run: npm publish --access public
