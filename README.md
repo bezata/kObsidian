@@ -355,6 +355,36 @@ Project conventions in [`AGENTS.md`](AGENTS.md).
 
 ---
 
+## Security & supply chain
+
+- **Every `.mcpb` release asset is VirusTotal-scanned.** The `Release`
+  workflow uploads each `kobsidian-<platform>.mcpb` bundle to
+  [VirusTotal](https://www.virustotal.com) via
+  [`crazy-max/ghaction-virustotal@v4`](https://github.com/crazy-max/ghaction-virustotal)
+  right after the release is published, then appends the analysis links
+  to the release body. Any user installing from a GitHub release can
+  click through to the public VirusTotal report for their platform's
+  bundle **before** they run it — no trust in the maintainer required.
+
+- **Transport hardening.** Streamable HTTP validates `Origin` against
+  an allowlist (403 on mismatch), implements CORS preflight
+  (`OPTIONS /mcp` → 204 + `Access-Control-*`), requires or defaults
+  `MCP-Protocol-Version`, and supports optional bearer auth via
+  `KOBSIDIAN_HTTP_BEARER_TOKEN`. stdio has no network surface.
+
+- **Pinned SDK floor.** `@modelcontextprotocol/sdk@^1.26.0` — mitigates
+  `GHSA-345p-7cg4-v4c7` (cross-client response leak) and
+  `CVE-2026-0621` (UriTemplate ReDoS). This repo pins `1.29.0`.
+
+- **npm provenance.** The release workflow publishes with
+  `npm publish --provenance`, so every version on npm has a
+  cryptographically-linked build statement pointing at the exact
+  GitHub Actions run that produced it.
+
+Full notes in [`docs/SECURITY.md`](docs/SECURITY.md).
+
+---
+
 ## Compatibility notes
 
 - **Protocol version** — `2025-11-25` (current MCP spec). HTTP clients
