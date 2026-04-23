@@ -413,5 +413,40 @@
     "name": "commands.search",
     "title": "Search Commands",
     "description": "Search Obsidian commands by ID or name."
+  },
+  {
+    "name": "wiki.init",
+    "title": "Initialize Wiki",
+    "description": "Scaffold the wiki layout: Sources/, Concepts/, Entities/ folders plus seed index.md, log.md, and wiki-schema.md. Idempotent; use force:true to re-seed index/log/schema files."
+  },
+  {
+    "name": "wiki.ingest",
+    "title": "Ingest Source",
+    "description": "File a new source into the wiki: create Sources/<slug>.md with canonical frontmatter, append a log entry, and return proposedEdits for index + related concept/entity pages for the LLM to apply via notes.update."
+  },
+  {
+    "name": "wiki.logAppend",
+    "title": "Append Wiki Log Entry",
+    "description": "Append a typed chronological entry to the wiki log using the convention '## [YYYY-MM-DD] <op> | <title>'. Initializes the wiki if needed."
+  },
+  {
+    "name": "wiki.indexRebuild",
+    "title": "Rebuild Wiki Index",
+    "description": "Regenerate the wiki index.md from the current state of Sources/, Concepts/, and Entities/. Groups entries by category; supports optional per-category counts."
+  },
+  {
+    "name": "wiki.query",
+    "title": "Query Wiki",
+    "description": "Rank wiki pages relevant to a topic using filename, alias, tag, summary and body hits. Returns the top pages so the LLM can drill in with notes.read."
+  },
+  {
+    "name": "wiki.lint",
+    "title": "Lint Wiki",
+    "description": "Health-check the wiki: orphans, broken links, stale sources, missing concept pages, singleton tags, and index.md parity. Read-only; returns grouped findings with totals."
+  },
+  {
+    "name": "wiki.summaryMerge",
+    "title": "Merge Summary Into Concept Or Entity Page",
+    "description": "Add a cited section into an existing concept or entity page (or create the page with canonical frontmatter if missing). Bumps 'updated' on existing pages."
   }
 ]

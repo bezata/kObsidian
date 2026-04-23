@@ -10,6 +10,7 @@ import { noteTools } from "./tools/notes.js";
 import { tagTools } from "./tools/tags.js";
 import { taskTools } from "./tools/tasks.js";
 import { templateAndCanvasTools } from "./tools/templates-canvas.js";
+import { wikiTools } from "./tools/wiki.js";
 
 export const toolRegistry: ToolDefinition[] = [
   ...noteTools,
@@ -23,4 +24,5 @@ export const toolRegistry: ToolDefinition[] = [
   ...kanbanTools,
   ...templateAndCanvasTools,
   ...apiTools,
+  ...wikiTools,
 ];
