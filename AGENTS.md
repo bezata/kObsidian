@@ -77,5 +77,4 @@ clients can discover and drive it without any Claude-Code-specific glue:
   `kobsidian://wiki/page/{+path}` whose list callback enumerates every
   Sources / Concepts / Entities page.
 - **Prompts:** `ingest-source`, `answer-from-wiki`, `health-check-wiki`
-  — server-side counterparts to the `.claude/skills/` files; both can
-  coexist.
+  — server-side counterparts to the `skills/` files; both can coexist.
