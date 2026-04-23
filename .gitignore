@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+htmlcov/
+
+# Bun
+bun.lockb
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local assistant/config folders
+.claude/
+
+# Generated or sensitive test artifacts
+**/MCP_Test_Suite*/
+**/MCP_Test_Suite_V2*/
+*test_report*.md
+*Test*Report*.md
+*SECURITY*.md
+*API*Test*.md
+
+# Wrapper scripts with hardcoded credentials
+run-mcp-with-env.sh
+run-with-env.sh
+
+# Specify artifacts
+.specify/
+Project_Description.md

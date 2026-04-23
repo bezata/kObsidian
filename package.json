@@ -1,0 +1,37 @@
+{
+  "name": "kobsidian",
+  "version": "3.0.0",
+  "private": true,
+  "description": "TypeScript + Bun MCP server for Obsidian with hybrid filesystem and API-backed tools.",
+  "type": "module",
+  "engines": {
+    "bun": ">=1.2.15"
+  },
+  "bin": {
+    "kobsidian": "./dist/server/stdio.js",
+    "kobsidian-http": "./dist/server/http.js"
+  },
+  "scripts": {
+    "dev:stdio": "bun run src/server/stdio.ts",
+    "dev:http": "bun run src/server/http.ts",
+    "build": "bun build src/server/stdio.ts --target bun --outdir dist/server && bun build src/server/http.ts --target bun --outdir dist/server",
+    "inventory": "bun run src/server/generate-tool-inventory.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "gray-matter": "^4.0.3",
+    "hono": "^4.12.14",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^24.9.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,27 @@
+export const WIKILINK_PATTERN = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+export const WIKILINK_SINGLE = /^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/;
+export const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\(([^)]+)\)/g;
+export const EMBED_PATTERN = /!\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+export const TAG_PATTERN = /#([a-zA-Z0-9_/-]+)/g;
+export const HEADING_PATTERN = /^(#{1,6})\s+(.+)$/gm;
+export const BLOCK_PATTERN = /\^([a-zA-Z0-9_-]+)\s*$/gm;
+export const FRONTMATTER_PATTERN = /^---\s*\n[\s\S]*?\n---\s*\n?/;
+export const DATE_ISO8601_PATTERN =
+  /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?$/;
+export const LIST_QUOTED_PATTERN = /"([^"]*)"/g;
+export const KANBAN_COLUMN_PATTERN = /^(#{2,3})\s+(.+)$/gm;
+export const KANBAN_CARD_PATTERN = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/gm;
+export const KANBAN_DATE_PATTERN = /@\{(\d{4}-\d{2}-\d{2})\}/g;
+export const LINK_SECTION_PATTERN = /\[\[([^#\]]+)#([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+export const LINK_BLOCK_PATTERN = /\[\[([^^\]]+)\^([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+export const TASK_DUE_DATE_PATTERN = /📅\s*(\d{4}-\d{2}-\d{2})\s*$/u;
+export const TASK_SCHEDULED_PATTERN = /⏳\s*(\d{4}-\d{2}-\d{2})\s*$/u;
+export const TASK_START_PATTERN = /🛫\s*(\d{4}-\d{2}-\d{2})\s*$/u;
+export const TASK_DONE_PATTERN = /✅\s*(\d{4}-\d{2}-\d{2})\s*$/u;
+export const TASK_CREATED_PATTERN = /➕\s*(\d{4}-\d{2}-\d{2})\s*$/u;
+export const TASK_PRIORITY_PATTERN = /(⏫|🔼|🔽|⏬)\s*$/u;
+export const TASK_RECURRENCE_PATTERN = /🔁\s*(every\s+.+?)\s*$/u;
+export const TASK_CHECKBOX_PATTERN = /^\s*-\s*\[([ xX])\]\s+(.+)$/;
+export const DATAVIEW_FULL_LINE_PATTERN = /^[_*~]*([-\w\s]+?)[_*~]*\s*::\s*(.+)$/gm;
+export const DATAVIEW_BRACKET_PATTERN = /\[([^[\]()]+?)\s*::\s*([^\]]+)\]/g;
+export const DATAVIEW_PAREN_PATTERN = /\(([^[\]()]+?)\s*::\s*([^)]+)\)/g;
