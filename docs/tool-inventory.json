@@ -1,5 +1,49 @@
 [
   {
+    "name": "vault.list",
+    "title": "List Known Vaults",
+    "description": "List every Obsidian vault kObsidian knows about, merged and deduplicated across three sources: the operator's OBSIDIAN_VAULT_PATH (the default — always included), any OBSIDIAN_VAULT_<NAME>=path env vars (explicit named vaults), and — when KOBSIDIAN_VAULT_DISCOVERY is `on` (the default) — the user's local Obsidian application registry at obsidian.json. Each item reports its `source`, `isDefault`, `isActive`, and `exists` so the LLM can flag stale or missing vaults. Pass `refresh: true` to force a fresh scan instead of using the 30s cache. Read-only. NOTE: the `obsidian-app` source is EXPERIMENTAL — it parses Obsidian's undocumented obsidian.json registry (stable since 1.0 but internal to Obsidian) and may silently stop returning results if Obsidian changes the format; the env-var sources are the documented, stable path.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "vault.current",
+    "title": "Current Active Vault",
+    "description": "Return the vault that filesystem tools (notes.*, tags.*, dataview.*, blocks.*, canvas.*, kanban.*, marp.*, templates.*, tasks.*, links.*, wiki.*, stats.vault) would resolve to right now, plus the full precedence chain so the LLM can explain to the user why that vault was picked. `reason` is `session-selected` (vault.select was called), `env-default` (fell back to OBSIDIAN_VAULT_PATH), or `none` (nothing configured — tools will fail until vault.select or an env var is set). When OBSIDIAN_API_URL is configured, the response also carries an `obsidianLiveInstance` note reminding the caller that workspace.* and commands.* tools target whichever vault the live Obsidian process has open, NOT the filesystem vault selected here. Read-only.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "vault.select",
+    "title": "Select Active Vault",
+    "description": "Set the session-active vault for subsequent filesystem tool calls. Identify the target by EXACTLY ONE of `id` (stable id from vault.list), `name` (case-insensitive match), or `path` (absolute directory path — need not appear in vault.list; lets the LLM point at a fresh/empty vault to initialise). Precedence chain becomes: per-call `vaultPath` argument (highest) → this session selection → OBSIDIAN_VAULT_PATH → error. Explicit `vaultPath` arguments on individual tool calls always override this selection. Respects KOBSIDIAN_VAULT_ALLOW / KOBSIDIAN_VAULT_DENY operator gating (though OBSIDIAN_VAULT_PATH is never filtered). Does NOT change which vault the live Obsidian process has open — `workspace.*` and `commands.*` tools remain tied to OBSIDIAN_API_URL. HTTP deployments: this server shares the selection across HTTP clients, so concurrent multi-client HTTP setups should pass `vaultPath` per call instead.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "vault.reset",
+    "title": "Reset Active Vault Selection",
+    "description": "Clear the session-selected vault so the precedence chain falls back to OBSIDIAN_VAULT_PATH. Use this to signal 'I'm done with the scratch vault, go back to the default'. Idempotent — running on an already-cleared session is a no-op that reports `changed: false`. Does not change per-call `vaultPath` behaviour.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "notes.read",
     "title": "Read Note",
     "description": "Read a note and return any combination of its body, parsed frontmatter metadata, and lightweight statistics. `include` selects which sections to return — default is `['content', 'metadata']`. Ask for `['stats']` alone when you only need word/character/heading/link/task counts and want to skip loading the full body. Read-only. Fails with `not_found` when `path` does not exist.",

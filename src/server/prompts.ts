@@ -49,8 +49,8 @@ export function registerWikiPrompts(server: McpServer): void {
         "",
         "Step 2 — iterate the returned `proposedEdits` array. For each proposal:",
         `- \`operation: ${opCreateStub}\` → use \`notes.create\` with the \`suggestedContent\`.`,
-        `- \`operation: ${opInsertAfterHeading}\` → use \`notes.insertAfterHeading\` with the given \`heading\`.`,
-        `- \`operation: ${opAppend}\` → use \`notes.append\`.`,
+        `- \`operation: ${opInsertAfterHeading}\` → use \`notes.edit\` with \`mode: 'after-heading'\`, \`anchor: <heading>\`, and the given \`suggestedContent\`.`,
+        `- \`operation: ${opAppend}\` → use \`notes.edit\` with \`mode: 'append'\`.`,
         "",
         "Apply index edits directly. For stub creations of Entities, consider whether to refine `kind` from `other` to `person/place/org/work` based on context.",
         "",
@@ -140,6 +140,43 @@ export function registerWikiPrompts(server: McpServer): void {
       ].join("\n");
       return {
         description: "Lint the wiki and propose ranked fixes.",
+        messages: [textMessage("user", body)],
+      };
+    },
+  );
+
+  server.registerPrompt(
+    "pick-vault",
+    {
+      title: "Pick An Obsidian Vault",
+      description:
+        "Prompt template that instructs the agent to discover the user's known Obsidian vaults, present them, and select one for the session using vault.select.",
+      argsSchema: {
+        hint: z
+          .string()
+          .optional()
+          .describe(
+            "Optional hint about which vault to pick, e.g. 'the work one' or 'Personal'. If omitted the agent presents the full list and asks.",
+          ),
+      },
+    },
+    (args) => {
+      const hint = args.hint?.trim();
+      const body = [
+        "Help the user pick an Obsidian vault for this session.",
+        "",
+        "Step 1 — call `vault.list` to get the known vaults. Each item carries `{id, name, path, isDefault, isActive, source, lastOpened?, exists}`.",
+        "",
+        hint
+          ? `Step 2 — the user hinted: "${hint}". Match it case-insensitively against the \`name\` field first, then against basename(path) as a fallback. If there's a clean single match, proceed to step 3 using that vault's \`name\`. If there are zero or multiple matches, present the candidates and ask the user to clarify.`
+          : "Step 2 — present the list grouped by `source` (env-default, env-named, obsidian-app). Surface the `isActive` / `isDefault` markers, and show `lastOpened` for obsidian-app entries so the user can see which they've touched recently. Ask the user which one to use.",
+        "",
+        "Step 3 — call `vault.select` with `{name: '<chosen vault name>'}`. Confirm the switch by echoing the new `active.path`.",
+        "",
+        "Step 4 — remind the user briefly: this selection affects filesystem tools (notes.*, tags.*, dataview.*, blocks.*, canvas.*, kanban.*, marp.*, templates.*, tasks.*, links.*, wiki.*, stats.vault). It does NOT change what the live Obsidian process has open, so workspace.* and commands.* will still target whatever vault Obsidian itself is on.",
+      ].join("\n");
+      return {
+        description: hint ? `Pick a vault matching "${hint}".` : "Pick an Obsidian vault.",
         messages: [textMessage("user", body)],
       };
     },

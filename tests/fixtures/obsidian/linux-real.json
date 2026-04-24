@@ -1,0 +1,13 @@
+{
+  "vaults": {
+    "aa11bb22cc33dd44": {
+      "path": "/home/carol/vaults/personal",
+      "ts": 1776000000000,
+      "open": true
+    },
+    "ee55ff66aa77bb88": {
+      "path": "/home/carol/vaults/research",
+      "ts": 1775500000000
+    }
+  }
+}

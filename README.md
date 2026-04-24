@@ -42,8 +42,9 @@ You curate the sources; the LLM does the bookkeeping.
 
 ## Why kObsidian
 
-- **Filesystem-first.** Operates on your vault directly. Obsidian doesn't need to be running for 55+ of the 62 tools.
-- **62 typed MCP tools** across notes, links, tags, tasks, Dataview, Canvas, Kanban, fenced blocks, Marp, Templates — every one Zod-validated with `structuredContent` output and the full 4-hint MCP annotation set (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+- **Filesystem-first.** Operates on your vault directly. Obsidian doesn't need to be running for 55+ of the 66 tools.
+- **66 typed MCP tools** across vaults, notes, links, tags, tasks, Dataview, Canvas, Kanban, fenced blocks, Marp, Templates — every one Zod-validated with `structuredContent` output and the full 4-hint MCP annotation set (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+- **Multi-vault `vault.*` (v0.3.0).** The LLM can `vault.list` your known Obsidian vaults (discovered from Obsidian's own registry or `OBSIDIAN_VAULT_<NAME>` env vars) and `vault.select` between them for the session. Fully backwards compatible: `OBSIDIAN_VAULT_PATH` stays the default and per-call `vaultPath` arguments always win.
 - **LLM-Wiki orchestration** — a `wiki.*` namespace that turns your vault into a compounding knowledge base: ingest sources, auto-update an index + greppable log, lint for orphans / broken links / stale pages. Agent applies cross-refs via a `proposedEdits` contract so every write is visible in the transcript.
 - **Both transports.** Classic stdio for local MCP clients and Streamable HTTP (Hono) for remote, with CORS preflight, `MCP-Protocol-Version` handling, origin 403, and optional bearer auth — all per the 2025-11-25 spec.
 - **Ships everywhere.** npm (`npx -y kobsidian-mcp`), cross-platform `.mcpb` bundles for Claude Desktop drag-and-drop, a `smithery.yaml` for Smithery, and a `server.json` for the MCP Registry. Each `.mcpb` release asset is VirusTotal-scanned with links appended to the release body.
@@ -52,11 +53,220 @@ You curate the sources; the LLM does the bookkeeping.
 
 ## Install
 
-Pick the channel that matches your client. All three read the same
-`OBSIDIAN_VAULT_PATH`, `OBSIDIAN_API_URL`, and `OBSIDIAN_REST_API_KEY`
-environment variables — see [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md).
+Pick your client below. **Every client supports the full hybrid mode**
+— filesystem-first tools (80+ of them) run against the vault path
+alone, and the same config can *simultaneously* carry the Local REST
+API key to unlock `workspace.*`, `commands.*`, and live DQL via
+`dataview.query*`. Set the whole env block once per client and every
+tool namespace lights up; leave the REST key blank and the
+filesystem-first tools keep working.
 
-### `npx` / `bunx` — Claude Code, Claude Desktop, Cursor, VSCode, Antigravity, Zed, Cline, JetBrains AI, …
+| Env var | Needed for |
+|---|---|
+| `OBSIDIAN_VAULT_PATH` | **Required everywhere.** Absolute path to the vault. |
+| `OBSIDIAN_API_URL` | Base URL of the Local REST API plugin. Default `https://127.0.0.1:27124`. |
+| `OBSIDIAN_API_VERIFY_TLS` | `false` unless you've trusted the REST API's self-signed cert. |
+| `OBSIDIAN_REST_API_KEY` | Local REST API plugin bearer key — only for `workspace.*` / `commands.*` / live `dataview.query*`. |
+
+Full list in [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md). Swap `npx`
+for `bunx` anywhere if you want ≈10 ms cold-start instead of ≈200 ms.
+
+<details>
+<summary><b>Claude Code</b> — <code>claude mcp add</code></summary>
+
+```bash
+claude mcp add kobsidian -s user \
+  --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
+  --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
+  --env OBSIDIAN_API_VERIFY_TLS=false \
+  --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools \
+  -- npx -y kobsidian-mcp
+```
+
+On Windows, wrap the command in `cmd /c`:
+`-- cmd /c npx -y kobsidian-mcp`.
+
+</details>
+
+<details>
+<summary><b>Claude Desktop</b> — drag-and-drop <code>.mcpb</code></summary>
+
+Download `kobsidian-<platform>.mcpb` from the
+[latest release](https://github.com/bezata/kObsidian/releases/latest) and
+drag it into Claude Desktop. The installer prompts for vault path +
+optional API URL / key. Every release asset is VirusTotal-scanned — the
+links are in the release body.
+
+Build one locally:
+
+```bash
+bun install
+bun run build:compile   # → dist/kobsidian (or .exe on Windows)
+bun run bundle:mcpb     # → kobsidian.mcpb
+```
+
+</details>
+
+<details>
+<summary><b>Codex CLI</b> (OpenAI) — <code>codex mcp add</code></summary>
+
+```bash
+codex mcp add kobsidian \
+  --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
+  --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
+  --env OBSIDIAN_API_VERIFY_TLS=false \
+  --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools \
+  -- npx -y kobsidian-mcp
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b> — <code>~/.cursor/mcp.json</code> or deeplink</summary>
+
+Edit `~/.cursor/mcp.json` (or the per-project `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "kobsidian": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "kobsidian-mcp"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
+        "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_API_VERIFY_TLS": "false",
+        "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
+      }
+    }
+  }
+}
+```
+
+Or hand a one-click deeplink to your users:
+`cursor://anysphere.cursor-deeplink/mcp/install?name=kobsidian&config=<base64-encoded-config>`.
+
+</details>
+
+<details>
+<summary><b>VS Code</b> (Copilot) — <code>code --add-mcp</code></summary>
+
+```bash
+code --add-mcp '{"name":"kobsidian","command":"npx","args":["-y","kobsidian-mcp"],"env":{"OBSIDIAN_VAULT_PATH":"/absolute/path/to/vault","OBSIDIAN_API_URL":"https://127.0.0.1:27124","OBSIDIAN_API_VERIFY_TLS":"false","OBSIDIAN_REST_API_KEY":"only-if-you-use-workspace-or-commands-tools"}}'
+```
+
+Or create `.vscode/mcp.json` in your workspace with the same shape under
+a top-level `servers` key.
+
+</details>
+
+<details>
+<summary><b>Gemini CLI</b> — <code>gemini mcp add</code></summary>
+
+```bash
+gemini mcp add kobsidian \
+  --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
+  --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
+  --env OBSIDIAN_API_VERIFY_TLS=false \
+  --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools \
+  -- npx -y kobsidian-mcp
+```
+
+Or hand-edit `~/.gemini/settings.json` under `mcpServers`.
+
+</details>
+
+<details>
+<summary><b>Antigravity</b> (Google) — <code>mcp_config.json</code></summary>
+
+Edit `~/.gemini/antigravity/mcp_config.json`
+(Windows: `%USERPROFILE%\.gemini\antigravity\mcp_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "kobsidian": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "kobsidian-mcp"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
+        "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_API_VERIFY_TLS": "false",
+        "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Zed</b> — <code>settings.json</code> under <code>context_servers</code></summary>
+
+In `~/.config/zed/settings.json`:
+
+```json
+{
+  "context_servers": {
+    "kobsidian": {
+      "source": "custom",
+      "command": "npx",
+      "args": ["-y", "kobsidian-mcp"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
+        "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_API_VERIFY_TLS": "false",
+        "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>OpenCode</b> — <code>opencode.json</code> under <code>mcp</code></summary>
+
+```json
+{
+  "mcp": {
+    "kobsidian": {
+      "type": "local",
+      "command": ["npx", "-y", "kobsidian-mcp"],
+      "environment": {
+        "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
+        "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_API_VERIFY_TLS": "false",
+        "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Factory Droid</b> — <code>droid mcp add</code></summary>
+
+```bash
+droid mcp add kobsidian "npx -y kobsidian-mcp" \
+  --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
+  --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
+  --env OBSIDIAN_API_VERIFY_TLS=false \
+  --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools
+```
+
+</details>
+
+<details>
+<summary><b>Other clients</b> (Cline, JetBrains AI, Continue, custom hosts) — generic <code>mcpServers</code> JSON</summary>
+
+Any MCP client that reads a standard `mcpServers` object will accept:
 
 ```json
 {
@@ -78,29 +288,16 @@ environment variables — see [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md).
 
 `"type": "stdio"` is optional on clients that infer transport from
 `command` (Claude Code), but **required by Claude Desktop, Cursor,
-VSCode, and Antigravity** — include it for maximum portability. Swap
-`npx` for `bunx` for ≈10 ms cold-start instead of ≈200 ms.
+VSCode, and Antigravity** — include it for maximum portability.
 
-### Claude Desktop — drag-and-drop `.mcpb`
-
-Download `kobsidian-<platform>.mcpb` from the
-[latest release](https://github.com/bezata/kObsidian/releases/latest) and
-drag it into Claude Desktop. The installer prompts for vault path +
-optional API URL / key. Every release asset is scanned — the VirusTotal
-links are in the release body.
-
-Build one locally:
-
-```bash
-bun install
-bun run build:compile   # → dist/kobsidian (or .exe on Windows)
-bun run bundle:mcpb     # → kobsidian.mcpb
-```
+</details>
 
 ### Smithery
 
 [smithery.ai](https://smithery.ai) renders an install UI straight from
-[`smithery.yaml`](smithery.yaml) and collects the three env vars for you.
+[`smithery.yaml`](smithery.yaml) and collects the four env vars for you
+— vault path plus the optional Local REST API URL / TLS / bearer key
+trio, so hybrid mode works out of the box.
 
 ### From source (contributing / hacking)
 
@@ -115,7 +312,7 @@ bun run dev:stdio    # or dev:http
 
 ## Obsidian plugins
 
-kObsidian is **filesystem-first** — 55+ of the 62 tools work against a
+kObsidian is **filesystem-first** — 55+ of the 66 tools work against a
 bare vault directory with no Obsidian plugins installed. The plugins
 below only matter if you want the specific tool namespaces that depend
 on them.
@@ -436,12 +633,14 @@ symlink them into `~/.claude/skills/` — see
 
 ## Tool surface
 
-**62 MCP tools across 15 namespaces** (down from ~90 in v0.2.x — see
-[CHANGELOG](CHANGELOG.md) for the full migration table). Always-current
+**66 MCP tools across 16 namespaces** (v0.2.5 consolidated from ~90 to 62;
+v0.3.0 added the `vault.*` namespace for multi-vault support — see
+[CHANGELOG](CHANGELOG.md) for the full history). Always-current
 inventory at **[`docs/tool-inventory.json`](docs/tool-inventory.json)**.
 
 | Namespace | Count | Highlights |
 |---|---:|---|
+| `vault.*` | 4 | `list` · `current` · `select` · `reset` — multi-vault discovery and session switching (v0.3.0) |
 | `notes.*` | 8 | `read` (content/metadata/stats via `include`) · `create` (note or folder) · `edit` (replace/append/prepend/after-heading/after-block) · `frontmatter` · `delete` · `move` · `list` · `search` |
 | `tags.*` | 4 | `modify` (add/remove/replace/merge) · `search` · `analyze` · `list` |
 | `links.*` | 8 | Backlinks · outgoing · broken · orphans · hubs · graph · health · connections |

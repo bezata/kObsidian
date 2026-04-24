@@ -12,9 +12,11 @@ import { systemTools } from "./tools/system.js";
 import { tagTools } from "./tools/tags.js";
 import { taskTools } from "./tools/tasks.js";
 import { templateTools } from "./tools/templates.js";
+import { vaultTools } from "./tools/vaults.js";
 import { wikiTools } from "./tools/wiki.js";
 
 export const toolRegistry: ToolDefinition[] = [
+  ...vaultTools,
   ...noteTools,
   ...tagTools,
   ...linkTools,

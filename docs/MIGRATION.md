@@ -1,5 +1,77 @@
 # Migration Guide
 
+## v0.3.0 — Multi-vault support (2026-04-25)
+
+v0.3.0 adds a `vault.*` namespace (4 tools) that lets an LLM discover
+and switch between multiple Obsidian vaults in a single server session.
+**Fully backwards compatible** — `OBSIDIAN_VAULT_PATH` behaviour is
+identical to v0.2.5, no existing tool signatures change, and all 111
+tests (the 56 from v0.2.5 plus 55 new ones) pass unmodified.
+
+### What's new
+
+- **`vault.list`, `vault.current`, `vault.select`, `vault.reset`** — see
+  [`tools.md`](tools.md) for the four new tools.
+- **Named env-var vaults.** Set `OBSIDIAN_VAULT_WORK=…`,
+  `OBSIDIAN_VAULT_PERSONAL=…`, etc. Suffix is lowercased to become the
+  vault name.
+- **`obsidian.json` discovery (experimental).** `vault.list` can surface
+  vaults from Obsidian's own registry file with zero configuration.
+  Marked experimental because the file format is internal to Obsidian
+  and undocumented — toggle via `KOBSIDIAN_VAULT_DISCOVERY=on|off`
+  (default `on`).
+- **Operator gating.** `KOBSIDIAN_VAULT_ALLOW` / `KOBSIDIAN_VAULT_DENY`
+  restrict which vaults the LLM can see and select.
+  `OBSIDIAN_VAULT_PATH` is never filtered by these — the operator's
+  blessed default always stays reachable.
+- **`pick-vault` server prompt** — slash command that walks `vault.list`
+  and calls `vault.select`.
+- **Cross-platform CI matrix** — every PR now runs typecheck, lint,
+  tests, and build on `ubuntu-latest` + `macos-latest` + `windows-latest`.
+
+### Precedence change
+
+`requireVaultPath` gained a middle slot:
+
+```
+v0.2.5:  args.vaultPath > OBSIDIAN_VAULT_PATH > throw
+v0.3.0:  args.vaultPath > vault.select'd vault > OBSIDIAN_VAULT_PATH > throw
+```
+
+If you never call `vault.select`, the chain collapses to the v0.2.5
+behaviour exactly. **No migration required** for existing deployments.
+
+### Env var additions
+
+| Var | Default | Meaning |
+|---|---|---|
+| `OBSIDIAN_VAULT_<NAME>` | unset | Additional named vault (suffix = name, lowercased). |
+| `KOBSIDIAN_VAULT_DISCOVERY` | `on` | Toggle obsidian.json parsing. |
+| `KOBSIDIAN_VAULT_ALLOW` | unset | Comma-separated allowlist (names or paths). |
+| `KOBSIDIAN_VAULT_DENY` | unset | Comma-separated denylist. |
+| `KOBSIDIAN_OBSIDIAN_CONFIG` | unset | Explicit path to obsidian.json (portable installs, WSL). |
+
+See [`ENVIRONMENT.md`](ENVIRONMENT.md) for the full table.
+
+### Before / after
+
+```diff
+# Environment — both forms still work
+- OBSIDIAN_VAULT_PATH=/Users/alice/Vaults/Personal
++ OBSIDIAN_VAULT_PATH=/Users/alice/Vaults/Personal
++ OBSIDIAN_VAULT_WORK=/Users/alice/Vaults/Work
++ OBSIDIAN_VAULT_SCRATCH=/Users/alice/Vaults/Scratch
+
+# From the LLM — new in v0.3.0
++ vault.list   {}
++ vault.select { name: "work" }
++ notes.list   {}          # now hits Vaults/Work
++ vault.reset  {}
++ notes.list   {}          # back to Vaults/Personal (the env default)
+```
+
+---
+
 ## v0.2.5 — Tool-surface consolidation (2026-04-25)
 
 v0.2.5 reduces the tool surface from ~90 to **62 tools across 15 namespaces**

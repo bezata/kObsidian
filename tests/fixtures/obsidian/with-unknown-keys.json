@@ -1,0 +1,13 @@
+{
+  "vaults": {
+    "abc123def456abcd": {
+      "path": "/Users/dan/Obsidian/Journal",
+      "ts": 1776100000000,
+      "open": true,
+      "unknownPerVaultField": "ignore me"
+    }
+  },
+  "updateVersion": "1.8.10",
+  "promoted": "community-plugins",
+  "someFutureField": { "nested": true }
+}
