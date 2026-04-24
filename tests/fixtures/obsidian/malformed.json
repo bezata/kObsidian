@@ -1,0 +1,1 @@
+{ "vaults": { "abc": { "path": "/tmp/v", "ts": 1 }, <-- malformed JSON

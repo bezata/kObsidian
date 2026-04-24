@@ -2,6 +2,12 @@
 
 Deeper reading, grouped by what you want to do.
 
+## Workspaces (multi-vault)
+
+- **[WORKSPACES.md](WORKSPACES.md)** — the only Obsidian MCP with in-session
+  vault switching (`vault.list` / `vault.select` / …). Discovery sources,
+  precedence chain, security gating, HTTP caveats.
+
 ## Architecture
 
 - **[architecture.md](architecture.md)** — the request → tools → domain → vault

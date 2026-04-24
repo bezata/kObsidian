@@ -19,6 +19,12 @@
     }
   },
   "files": {
-    "ignore": [".claude", "dist", "coverage", "node_modules"]
+    "ignore": [
+      ".claude",
+      "dist",
+      "coverage",
+      "node_modules",
+      "tests/fixtures/obsidian/malformed.json"
+    ]
   }
 }

@@ -1,0 +1,14 @@
+{
+  "vaults": {
+    "a1b2c3d4e5f60708": {
+      "path": "/Users/alice/Documents/Personal",
+      "ts": 1776000000000,
+      "open": true
+    },
+    "1234567890abcdef": {
+      "path": "/Users/alice/Work/notes",
+      "ts": 1775000000000
+    }
+  },
+  "updateVersion": "1.8.10"
+}

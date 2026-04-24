@@ -7,6 +7,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-25
+
+> **Multi-vault support.** kObsidian can now discover and switch between
+> multiple Obsidian vaults in a single server session. The four new
+> `vault.*` tools (`list`, `current`, `select`, `reset`) let an LLM
+> enumerate the user's known vaults and change the active vault for
+> subsequent filesystem tool calls — without the user having to restart
+> the server or thread `vaultPath` through every call.
+>
+> **Fully backwards compatible.** `OBSIDIAN_VAULT_PATH` continues to
+> work exactly as in v0.2.5; if `vault.select` is never called, every
+> tool resolves to the same path as before. No existing tool signatures
+> change.
+
+### Added
+
+- **`vault.*` namespace (4 tools, +1 new namespace)** — bringing the surface to
+  **66 tools across 16 namespaces**.
+  - `vault.list` — discover known vaults merged from three sources.
+  - `vault.current` — echo the active vault + precedence explanation.
+  - `vault.select` — set the session-active vault (by `id`, `name`, or `path`).
+  - `vault.reset` — clear the session selection, fall back to env default.
+- **Named env-var vaults.** `OBSIDIAN_VAULT_<NAME>=path` env vars
+  register additional vaults (suffix becomes the lowercase name).
+  Documented, stable, and the recommended path for explicit multi-vault
+  setups.
+- **obsidian.json discovery (EXPERIMENTAL).** When
+  `KOBSIDIAN_VAULT_DISCOVERY=on` (default), kObsidian parses Obsidian's
+  undocumented obsidian.json vault registry so `vault.list` returns the
+  user's real vaults with zero config. Platform-specific paths
+  (macOS `~/Library/Application Support/…`, Windows `%APPDATA%\obsidian\…`,
+  Linux XDG + Flatpak + Snap). Escape hatch:
+  `KOBSIDIAN_OBSIDIAN_CONFIG=/absolute/path/obsidian.json` for portable
+  installs and WSL. Marked experimental because the format is internal
+  to Obsidian and could change without notice; parse failures are
+  surfaced via `vault.list.obsidianConfigError` and never crash the
+  server.
+- **Operator gating env vars.** `KOBSIDIAN_VAULT_ALLOW` (comma-separated
+  allowlist, names or paths) and `KOBSIDIAN_VAULT_DENY` (denylist,
+  applied after allowlist). `OBSIDIAN_VAULT_PATH` is never filtered by
+  either to prevent accidental self-lockout.
+- **`pick-vault` prompt.** A new MCP server-side prompt template that
+  clients like Claude Desktop surface as a slash command; it walks
+  `vault.list` → presents options → calls `vault.select`.
+- **Session-active-vault addendum on every filesystem tool.** Descriptions
+  for every tool in `notes.*`, `tags.*`, `dataview.*`, `blocks.*`,
+  `canvas.*`, `kanban.*`, `marp.*`, `templates.*`, `tasks.*`, `links.*`,
+  `wiki.*`, and `stats.vault` now explain the precedence chain inline.
+  `workspace.*` and `commands.*` get the inverse note: they target the
+  live Obsidian process's vault, not the filesystem selection.
+- **Cross-platform CI matrix.** New `.github/workflows/ci.yml` runs
+  `typecheck + lint + test + build` on `ubuntu-latest` + `macos-latest` +
+  `windows-latest` for every PR and push to main. Was ubuntu-only
+  via `release.yml`'s `prepublishOnly` gate before.
+
+### Changed
+
+- **`requireVaultPath` precedence** is now `arg > session > env > error`
+  (was `arg > env > error`). The middle slot is populated by
+  `vault.select`; absent when no select has happened, so behaviour
+  collapses to v0.2.5 exactly.
+- **`DomainContext` type** extended with `session: SessionState` +
+  `vaults: VaultCache`. Additive — existing consumers that destructure
+  `{env, api}` continue to work unmodified.
+- **`AppEnv` type** extended with `namedVaults: Record<string, string>`
+  parsed from `OBSIDIAN_VAULT_<NAME>=path` env vars.
+
+### Fixed
+
+- `ingest-source` prompt updated to reference `notes.edit` (with
+  `mode: 'after-heading'` / `mode: 'append'`) instead of the removed
+  `notes.insertAfterHeading` / `notes.append` (v0.2.5 fallout that
+  slipped through that release's prompt text).
+
+### Migration from 0.2.5
+
+Zero required changes — `OBSIDIAN_VAULT_PATH` behaviour is identical.
+Opt in to multi-vault by adding named env vars or using `vault.select`:
+
+```diff
+# Before (still works in 0.3.0)
+- OBSIDIAN_VAULT_PATH=/Users/alice/Vaults/Personal
+
+# After — optional multi-vault
++ OBSIDIAN_VAULT_PATH=/Users/alice/Vaults/Personal
++ OBSIDIAN_VAULT_WORK=/Users/alice/Vaults/Work
++ OBSIDIAN_VAULT_SCRATCH=/Users/alice/Vaults/Scratch
+```
+
+Then from the LLM: `vault.select { name: "work" }` to switch,
+`vault.reset` to return to the default.
+
 ## [0.2.5] — 2026-04-25
 
 > **Tool-surface consolidation.** The tool surface has been reduced from ~90
