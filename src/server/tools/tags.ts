@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { readNote } from "../../domain/notes.js";
 import {
   addTags,
@@ -8,85 +7,95 @@ import {
   searchByTag,
   updateTags,
 } from "../../domain/tags.js";
-import { notePathSchema, tagSchema, tagsSchema } from "../../schema/primitives.js";
-import type { ToolDefinition } from "../tool-definition.js";
 import {
-  READ_ONLY,
-  listResultSchema,
-  looseObjectSchema,
-  mutationResultSchema,
-} from "../tool-schemas.js";
+  type TagsAnalyzeArgs,
+  type TagsListArgs,
+  type TagsModifyArgs,
+  type TagsSearchArgs,
+  tagsAnalyzeArgsSchema,
+  tagsAnalyzeOutputSchema,
+  tagsListArgsSchema,
+  tagsListOutputSchema,
+  tagsModifyArgsSchema,
+  tagsModifyOutputSchema,
+  tagsSearchArgsSchema,
+  tagsSearchOutputSchema,
+} from "../../schema/tags.js";
+import type { ToolDefinition } from "../tool-definition.js";
+import { IDEMPOTENT_ADDITIVE, READ_ONLY } from "../tool-schemas.js";
 
 export const tagTools: ToolDefinition[] = [
   {
-    name: "tags.analyze",
-    title: "Analyze Tags",
-    description: "Extract frontmatter and inline tags from a note.",
-    inputSchema: z.object({ path: notePathSchema, vaultPath: z.string().optional() }),
-    outputSchema: looseObjectSchema,
+    name: "tags.modify",
+    title: "Modify Tags",
+    description:
+      "Mutate the frontmatter `tags` list of a single note. Four ops are supported: `add` unions the incoming tags with the existing list (duplicates dropped); `remove` drops any incoming tag currently present; `replace` overwrites the list entirely; `merge` is an alias for `add`. Leading `#` on incoming tags is stripped automatically. This tool only touches the frontmatter block — inline `#tag` occurrences in the body are left untouched. Idempotent: repeated calls with the same op and tags converge on the same result. Returns `{changed, target, summary, op, tagsAfter}`.",
+    inputSchema: tagsModifyArgsSchema,
+    outputSchema: tagsModifyOutputSchema,
+    annotations: IDEMPOTENT_ADDITIVE,
+    handler: async (context, rawArgs) => {
+      const args = tagsModifyArgsSchema.parse(rawArgs) as TagsModifyArgs;
+      const mutationArgs = { path: args.path, tags: args.tags, vaultPath: args.vaultPath };
+      if (args.op === "add" || args.op === "merge") {
+        const result = await addTags(context, mutationArgs);
+        return { ...result, op: args.op, tagsAfter: result.allTags };
+      }
+      if (args.op === "remove") {
+        const result = await removeTags(context, mutationArgs);
+        return { ...result, op: args.op, tagsAfter: result.remainingTags };
+      }
+      const result = await updateTags(context, { ...mutationArgs, merge: false });
+      return { ...result, op: args.op, tagsAfter: result.newTags };
+    },
+    inputExamples: [
+      {
+        description: "Add two tags to a note (idempotent)",
+        input: { path: "Projects/Alpha.md", op: "add", tags: ["in-progress", "priority/high"] },
+      },
+      {
+        description: "Replace a note's entire tag set",
+        input: { path: "Inbox/today.md", op: "replace", tags: ["processed"] },
+      },
+    ],
+  },
+  {
+    name: "tags.search",
+    title: "Search Notes By Tag",
+    description:
+      "Find every note in the vault that contains a given tag, either in frontmatter `tags` or as an inline `#tag` in the body. Leading `#` on the query is stripped. For each hit, the result carries `{file, absolutePath, tagLocations: {frontmatter, inline}}` so callers can distinguish where the tag came from. Read-only. For analyzing tags of ONE specific note (not a vault-wide search), use `tags.analyze` instead.",
+    inputSchema: tagsSearchArgsSchema,
+    outputSchema: tagsSearchOutputSchema,
     annotations: READ_ONLY,
-    handler: async (context, args) => {
-      const note = await readNote(context, args as { path: string; vaultPath?: string });
+    handler: async (context, rawArgs) => {
+      const args = tagsSearchArgsSchema.parse(rawArgs) as TagsSearchArgs;
+      return searchByTag(context, args);
+    },
+  },
+  {
+    name: "tags.analyze",
+    title: "Analyze Note Tags",
+    description:
+      "Return the tags present in a single note, split into `frontmatterTags`, `inlineTags`, and their de-duplicated union `allTags`. Use this when you have one note and want to know what tags it carries — contrast with `tags.search`, which scans the whole vault for one specific tag. Read-only.",
+    inputSchema: tagsAnalyzeArgsSchema,
+    outputSchema: tagsAnalyzeOutputSchema,
+    annotations: READ_ONLY,
+    handler: async (context, rawArgs) => {
+      const args = tagsAnalyzeArgsSchema.parse(rawArgs) as TagsAnalyzeArgs;
+      const note = await readNote(context, { path: args.path, vaultPath: args.vaultPath });
       return { path: note.path, ...extractAllTags(note.content) };
     },
   },
   {
-    name: "tags.add",
-    title: "Add Tags",
-    description: "Add tags to a note frontmatter block.",
-    inputSchema: z.object({
-      path: notePathSchema,
-      tags: tagsSchema,
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    handler: (context, args) => addTags(context, args as Parameters<typeof addTags>[1]),
-  },
-  {
-    name: "tags.update",
-    title: "Update Tags",
-    description: "Replace or merge a note's frontmatter tags.",
-    inputSchema: z.object({
-      path: notePathSchema,
-      tags: tagsSchema,
-      merge: z.boolean().optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    handler: (context, args) => updateTags(context, args as Parameters<typeof updateTags>[1]),
-  },
-  {
-    name: "tags.remove",
-    title: "Remove Tags",
-    description: "Remove tags from frontmatter.",
-    inputSchema: z.object({
-      path: notePathSchema,
-      tags: tagsSchema,
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    handler: (context, args) => removeTags(context, args as Parameters<typeof removeTags>[1]),
-  },
-  {
-    name: "tags.search",
-    title: "Search By Tag",
-    description: "Find notes that contain a tag in frontmatter or inline content.",
-    inputSchema: z.object({ tag: tagSchema, vaultPath: z.string().optional() }),
-    outputSchema: listResultSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) => searchByTag(context, args as Parameters<typeof searchByTag>[1]),
-  },
-  {
     name: "tags.list",
-    title: "List Tags",
-    description: "List unique tags used across the vault.",
-    inputSchema: z.object({
-      includeCounts: z.boolean().optional(),
-      sortBy: z.enum(["name", "count"]).optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: listResultSchema,
+    title: "List All Tags",
+    description:
+      "List every unique tag used across the vault (frontmatter and inline combined). With `includeCounts: true`, each item includes how many notes carry the tag; `sortBy` lets you sort by `name` or `count` (the latter requires counts). Read-only. For finding notes carrying a specific tag, use `tags.search`.",
+    inputSchema: tagsListArgsSchema,
+    outputSchema: tagsListOutputSchema,
     annotations: READ_ONLY,
-    handler: (context, args) => listTags(context, args as Parameters<typeof listTags>[1]),
+    handler: async (context, rawArgs) => {
+      const args = tagsListArgsSchema.parse(rawArgs) as TagsListArgs;
+      return listTags(context, args);
+    },
   },
 ];

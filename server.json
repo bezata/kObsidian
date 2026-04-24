@@ -3,7 +3,7 @@
   "name": "io.github.bezata/kobsidian-mcp",
   "title": "kObsidian",
   "description": "Filesystem-first MCP for Obsidian — an LLM-maintained wiki inspired by Karpathy's LLM Wiki.",
-  "version": "0.2.1",
+  "version": "0.2.5",
   "repository": {
     "url": "https://github.com/bezata/kObsidian",
     "source": "github"
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "kobsidian-mcp",
-      "version": "0.2.1",
+      "version": "0.2.5",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

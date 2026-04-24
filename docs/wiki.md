@@ -58,8 +58,8 @@ log-keeping, the indexing, and the lint.
    ┌────────────────────────────────────────────────────────────┐      │
    │  LLM applies each proposedEdit via existing notes.* tools  │      │
    │   • createStub         → notes.create                      │      │
-   │   • insertAfterHeading → notes.insertAfterHeading          │      │
-   │   • append             → notes.append                      │      │
+   │   • insertAfterHeading → notes.edit  (mode: "after-heading")│      │
+   │   • append             → notes.edit  (mode: "append")      │      │
    │  Updates concept/entity pages, adds index entry, …         │      │
    └────────────────────────────────────────────────────────────┘      │
                                                                        │
@@ -140,9 +140,9 @@ type ProposedEdit = {
 
 Why: LLM-generated entity extractions are wrong often enough that blind
 writes across 10+ files are a foot-gun. The agent applies each proposal
-with existing `notes.update` / `notes.insertAfterHeading` / `notes.create`
-tools — so every wiki-adjacent write is reviewable and visible in the
-transcript.
+with existing `notes.create` / `notes.edit` (mode `after-heading` or
+`append`) tools — so every wiki-adjacent write is reviewable and visible
+in the transcript.
 
 ## Log format (greppable on purpose)
 

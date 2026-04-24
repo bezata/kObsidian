@@ -17,7 +17,7 @@ Deeper reading, grouped by what you want to do.
 
 ## Tools, resources, prompts
 
-- **[tools.md](tools.md)** — 90 tools grouped by namespace, annotation
+- **[tools.md](tools.md)** — 62 tools grouped by namespace, annotation
   summary, pointer to the generated [`tool-inventory.json`](tool-inventory.json).
 
 ## Security
