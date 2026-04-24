@@ -18,7 +18,7 @@ You curate the sources; the LLM does the bookkeeping.
 [![MCP](https://img.shields.io/badge/MCP-2025--11--25-1e88e5?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io)
 [![Bun](https://img.shields.io/badge/runtime-Bun_1.3+-f472b6?logo=bun&logoColor=white)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tools](https://img.shields.io/badge/MCP_tools-90-1e88e5)](docs/tools.md)
+[![Tools](https://img.shields.io/badge/MCP_tools-66-1e88e5)](docs/tools.md)
 [![Resources](https://img.shields.io/badge/MCP_resources-4-1e88e5)](docs/tools.md#resources)
 [![Prompts](https://img.shields.io/badge/MCP_prompts-3-1e88e5)](docs/tools.md#prompts)
 [![Smithery](https://img.shields.io/badge/Smithery-listed-8b5cf6)](https://smithery.ai)
@@ -37,6 +37,14 @@ You curate the sources; the LLM does the bookkeeping.
 [![kObsidian MCP server](https://glama.ai/mcp/servers/bezata/kObsidian/badges/card.svg)](https://glama.ai/mcp/servers/bezata/kObsidian)
 
 </div>
+
+---
+
+> **🧰 The only Obsidian MCP with workspaces.** `vault.list` / `vault.select`
+> let an LLM discover and switch between your Obsidian vaults in-session —
+> no restart, no config edit, no per-tool path threading. Backwards
+> compatible with `OBSIDIAN_VAULT_PATH`. Added in v0.3.0.
+> See **[docs/WORKSPACES.md](docs/WORKSPACES.md)**.
 
 ---
 
