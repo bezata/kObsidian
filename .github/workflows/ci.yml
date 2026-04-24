@@ -1,0 +1,50 @@
+name: CI
+
+# Cross-platform test matrix. Runs on every PR and push so platform
+# regressions (Windows path separators, macOS path casing, Linux XDG,
+# etc.) are caught before merge rather than after a release tag.
+#
+# The existing release.yml handles tag-push publishing and only runs
+# its own test gate on ubuntu-latest inside prepublishOnly — this
+# workflow sits independently on top so main stays green across all
+# three platforms between releases.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Force Node-20-bundled JS actions onto Node 24, matching release.yml.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint
+        run: bun run lint
+      - name: Test
+        run: bun run test
+      - name: Build
+        run: bun run build
