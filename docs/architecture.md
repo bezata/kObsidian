@@ -174,8 +174,8 @@ Both transports share the same `McpServer` instance factory.
                          ▼                                   ▼
                 wiki/Sources/<slug>.md          ┌────────────────────────┐
                          │                      │ LLM applies edits via  │
-                         │ appends              │  notes.insertAfter*    │
-                         ▼                      │  notes.update          │
+                         │ appends              │  notes.edit (after-*)  │
+                         ▼                      │  notes.edit (replace)  │
                    wiki/log.md                  │  notes.create          │
                                                 └────────────────────────┘
 

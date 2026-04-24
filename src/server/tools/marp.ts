@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   listMarpSlides,
   readMarpDeck,
@@ -6,78 +5,78 @@ import {
   updateMarpFrontmatter,
   updateMarpSlide,
 } from "../../domain/marp.js";
-import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
+import {
+  type MarpReadArgs,
+  type MarpUpdateArgs,
+  marpReadArgsSchema,
+  marpUpdateArgsSchema,
+} from "../../schema/marp.js";
 import type { ToolDefinition } from "../tool-definition.js";
 import {
-  IDEMPOTENT,
+  IDEMPOTENT_DESTRUCTIVE,
   READ_ONLY,
-  listResultSchema,
   looseObjectSchema,
   mutationResultSchema,
 } from "../tool-schemas.js";
 
 export const marpTools: ToolDefinition[] = [
   {
-    name: "marp.deck.read",
+    name: "marp.read",
     title: "Read Marp Deck",
-    description: "Read Marp deck frontmatter, slides, directives, and source spans.",
-    inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
+    description:
+      "Read some or all of a Marp presentation deck (a markdown file with `marp: true` frontmatter and `---` slide separators). The `part` field selects what to return: `deck` returns the whole deck (frontmatter, all slides, directives); `slides` returns a list of slide summaries (separator and directive metadata, no body); `slide` returns one slide's full source, located by `slideId` or 0-based `index`. Output shape varies by `part` — see the description of each variant. Read-only. Use `marp.update` to mutate.",
+    inputSchema: marpReadArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY,
-    handler: (context, args) => readMarpDeck(context, args as Parameters<typeof readMarpDeck>[1]),
+    handler: async (context, rawArgs) => {
+      const args = marpReadArgsSchema.parse(rawArgs) as MarpReadArgs;
+      if (args.part === "deck") {
+        const { part: _p, ...rest } = args;
+        return readMarpDeck(context, rest);
+      }
+      if (args.part === "slides") {
+        const { part: _p, ...rest } = args;
+        return listMarpSlides(context, rest);
+      }
+      const { part: _p, ...rest } = args;
+      return readMarpSlide(context, rest);
+    },
   },
   {
-    name: "marp.slides.list",
-    title: "List Marp Slides",
-    description: "List Marp slides with separator and directive metadata.",
-    inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
-    outputSchema: listResultSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) =>
-      listMarpSlides(context, args as Parameters<typeof listMarpSlides>[1]),
-  },
-  {
-    name: "marp.slides.read",
-    title: "Read Marp Slide",
-    description: "Read one Marp slide source-preservingly.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      slideId: z.string().optional(),
-      index: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: looseObjectSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) => readMarpSlide(context, args as Parameters<typeof readMarpSlide>[1]),
-  },
-  {
-    name: "marp.slides.update",
-    title: "Update Marp Slide",
-    description: "Replace one Marp slide body without rewriting neighboring slides.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      source: z.string(),
-      slideId: z.string().optional(),
-      index: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
+    name: "marp.update",
+    title: "Update Marp Deck",
+    description:
+      "Mutate a Marp deck in place. `part:'slide'` replaces one slide's body (located by `slideId` or `index`) without touching neighbouring slides. `part:'frontmatter'` merges `fields` into the deck's frontmatter — unspecified fields are preserved; pass `null` to a field to unset it. Idempotent — re-running with identical inputs is a no-op on the file contents. Destructive — overwrites in place.",
+    inputSchema: marpUpdateArgsSchema,
     outputSchema: mutationResultSchema,
-    annotations: IDEMPOTENT,
-    handler: (context, args) =>
-      updateMarpSlide(context, args as Parameters<typeof updateMarpSlide>[1]),
-  },
-  {
-    name: "marp.frontmatter.update",
-    title: "Update Marp Frontmatter",
-    description: "Update selected Marp deck frontmatter fields while preserving unrelated source.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      fields: z.record(z.string(), z.unknown()),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    annotations: IDEMPOTENT,
-    handler: (context, args) =>
-      updateMarpFrontmatter(context, args as Parameters<typeof updateMarpFrontmatter>[1]),
+    annotations: IDEMPOTENT_DESTRUCTIVE,
+    handler: async (context, rawArgs) => {
+      const args = marpUpdateArgsSchema.parse(rawArgs) as MarpUpdateArgs;
+      if (args.part === "slide") {
+        const { part: _p, ...rest } = args;
+        return updateMarpSlide(context, rest);
+      }
+      const { part: _p, ...rest } = args;
+      return updateMarpFrontmatter(context, rest);
+    },
+    inputExamples: [
+      {
+        description: "Replace the second slide's body",
+        input: {
+          part: "slide",
+          filePath: "Decks/launch.md",
+          index: 1,
+          source: "# New headline\n\nUpdated body",
+        },
+      },
+      {
+        description: "Change the deck's theme and set a new title",
+        input: {
+          part: "frontmatter",
+          filePath: "Decks/launch.md",
+          fields: { theme: "gaia", title: "Launch plan" },
+        },
+      },
+    ],
   },
 ];

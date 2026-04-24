@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   executeDataviewQuery,
   listNotesByFolderDql,
@@ -9,202 +8,151 @@ import {
   addDataviewField,
   extractDataviewFieldsFromFile,
   readDataviewIndex,
-  readDataviewJsBlocks,
-  readDataviewQueryBlocks,
   removeDataviewField,
   searchByDataviewField,
-  updateDataviewJsBlock,
-  updateDataviewQueryBlock,
 } from "../../domain/dataview.js";
-import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
+import {
+  type DataviewFieldsReadArgs,
+  type DataviewFieldsWriteArgs,
+  type DataviewIndexArgs,
+  type DataviewListByFolderArgs,
+  type DataviewListByTagArgs,
+  type DataviewQueryArgs,
+  type DataviewTableArgs,
+  dataviewFieldsReadArgsSchema,
+  dataviewFieldsWriteArgsSchema,
+  dataviewIndexArgsSchema,
+  dataviewListByFolderArgsSchema,
+  dataviewListByTagArgsSchema,
+  dataviewQueryArgsSchema,
+  dataviewTableArgsSchema,
+} from "../../schema/dataview.js";
 import type { ToolDefinition } from "../tool-definition.js";
 import {
-  IDEMPOTENT,
+  IDEMPOTENT_ADDITIVE,
   READ_ONLY,
   READ_ONLY_OPEN_WORLD,
-  listResultSchema,
   looseObjectSchema,
   mutationResultSchema,
 } from "../tool-schemas.js";
 
 export const dataviewTools: ToolDefinition[] = [
   {
-    name: "dataview.index.read",
-    title: "Read Dataview Index",
-    description: "Read page, list-item, task, DQL, and DataviewJS metadata from a note.",
-    inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
-    outputSchema: looseObjectSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) =>
-      readDataviewIndex(context, args as Parameters<typeof readDataviewIndex>[1]),
-  },
-  {
-    name: "dataview.fields.extract",
-    title: "Extract Dataview Fields",
-    description: "Extract scoped Dataview fields from a note.",
-    inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
-    outputSchema: listResultSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) =>
-      extractDataviewFieldsFromFile(
-        context,
-        args as Parameters<typeof extractDataviewFieldsFromFile>[1],
-      ),
-  },
-  {
-    name: "dataview.fields.search",
-    title: "Search Dataview Fields",
-    description: "Search notes by Dataview field key and optional value.",
-    inputSchema: z.object({
-      key: z.string().min(1),
-      value: z.unknown().optional(),
-      valueType: z.enum(["string", "number", "boolean", "date", "link", "list"]).optional(),
-      scope: z.enum(["page", "list", "task", "all"]).optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: looseObjectSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) =>
-      searchByDataviewField(context, args as Parameters<typeof searchByDataviewField>[1]),
-  },
-  {
-    name: "dataview.fields.add",
-    title: "Add Dataview Field",
-    description: "Insert a Dataview field into a note.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      key: z.string().min(1),
-      value: z.unknown(),
-      syntaxType: z.enum(["full-line", "bracket", "paren"]).optional(),
-      insertAt: z.enum(["start", "end", "afterFrontmatter"]).optional(),
-      scope: z.enum(["page", "list", "task"]).optional(),
-      lineNumber: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    handler: (context, args) =>
-      addDataviewField(context, args as Parameters<typeof addDataviewField>[1]),
-  },
-  {
-    name: "dataview.fields.remove",
-    title: "Remove Dataview Field",
-    description: "Remove a Dataview field from a note.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      key: z.string().min(1),
-      lineNumber: positiveIntSchema.optional(),
-      scope: z.enum(["page", "list", "task", "all"]).optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    handler: (context, args) =>
-      removeDataviewField(context, args as Parameters<typeof removeDataviewField>[1]),
-  },
-  {
-    name: "dataview.query.read",
-    title: "Read Dataview Query Blocks",
-    description: "Extract fenced dataview DQL blocks from a note.",
-    inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
-    outputSchema: listResultSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) =>
-      readDataviewQueryBlocks(context, args as Parameters<typeof readDataviewQueryBlocks>[1]),
-  },
-  {
-    name: "dataview.query.update",
-    title: "Update Dataview Query Block",
-    description: "Replace one fenced dataview DQL block source-preservingly.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      source: z.string(),
-      blockId: z.string().optional(),
-      index: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    annotations: IDEMPOTENT,
-    handler: (context, args) =>
-      updateDataviewQueryBlock(context, args as Parameters<typeof updateDataviewQueryBlock>[1]),
-  },
-  {
-    name: "dataview.js.read",
-    title: "Read DataviewJS Blocks",
-    description: "Extract fenced dataviewjs blocks from a note without executing them.",
-    inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
-    outputSchema: listResultSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) =>
-      readDataviewJsBlocks(context, args as Parameters<typeof readDataviewJsBlocks>[1]),
-  },
-  {
-    name: "dataview.js.update",
-    title: "Update DataviewJS Block",
-    description: "Replace one fenced dataviewjs block source-preservingly.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      source: z.string(),
-      blockId: z.string().optional(),
-      index: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
-    outputSchema: mutationResultSchema,
-    annotations: IDEMPOTENT,
-    handler: (context, args) =>
-      updateDataviewJsBlock(context, args as Parameters<typeof updateDataviewJsBlock>[1]),
-  },
-  {
     name: "dataview.query",
     title: "Run Dataview Query",
-    description: "Execute a Dataview Query Language (DQL) query through the Obsidian API.",
-    inputSchema: z.object({ query: z.string().min(1) }),
+    description:
+      'Execute an arbitrary Dataview Query Language (DQL) query through the Obsidian Local REST API. The query string is raw DQL — e.g. `LIST FROM #inbox`, `TASK WHERE !completed`, `TABLE file.mtime FROM "Journal"`. Requires the Dataview plugin to be enabled in Obsidian and the Local REST API plugin to be configured (OBSIDIAN_API_URL/OBSIDIAN_REST_API_KEY). For common patterns (list-by-tag, list-by-folder, table) the sugar tools `dataview.listByTag`/`listByFolder`/`table` are easier to use — prefer those when applicable and fall back to `dataview.query` for custom DQL.',
+    inputSchema: dataviewQueryArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY_OPEN_WORLD,
-    handler: (context, args) =>
-      executeDataviewQuery(context, args as Parameters<typeof executeDataviewQuery>[1]),
+    handler: async (context, rawArgs) => {
+      const args = dataviewQueryArgsSchema.parse(rawArgs) as DataviewQueryArgs;
+      return executeDataviewQuery(context, args);
+    },
   },
   {
     name: "dataview.listByTag",
-    title: "List Notes By Tag (DQL)",
-    description: "Run a DQL LIST query for a tag.",
-    inputSchema: z.object({
-      tag: z.string().min(1),
-      whereClause: z.string().optional(),
-      sortBy: z.string().optional(),
-      limit: positiveIntSchema.optional(),
-    }),
+    title: "List Notes By Tag",
+    description:
+      "Convenience wrapper that runs `LIST FROM #tag` (optionally with `WHERE`, `SORT`, and `LIMIT` clauses). Returns the same shape as `dataview.query`. Requires the Dataview and Local REST API plugins. Use this instead of authoring raw DQL when filtering by a single tag.",
+    inputSchema: dataviewListByTagArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY_OPEN_WORLD,
-    handler: (context, args) =>
-      listNotesByTagDql(context, args as Parameters<typeof listNotesByTagDql>[1]),
+    handler: async (context, rawArgs) => {
+      const args = dataviewListByTagArgsSchema.parse(rawArgs) as DataviewListByTagArgs;
+      return listNotesByTagDql(context, args);
+    },
   },
   {
     name: "dataview.listByFolder",
-    title: "List Notes By Folder (DQL)",
-    description: "Run a DQL LIST query for a folder.",
-    inputSchema: z.object({
-      folder: z.string().min(1),
-      whereClause: z.string().optional(),
-      sortBy: z.string().optional(),
-      limit: positiveIntSchema.optional(),
-    }),
+    title: "List Notes By Folder",
+    description:
+      'Convenience wrapper that runs `LIST FROM "folder"` (optionally with `WHERE`, `SORT`, and `LIMIT` clauses). Useful when you want every note under a vault folder. Requires the Dataview and Local REST API plugins.',
+    inputSchema: dataviewListByFolderArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY_OPEN_WORLD,
-    handler: (context, args) =>
-      listNotesByFolderDql(context, args as Parameters<typeof listNotesByFolderDql>[1]),
+    handler: async (context, rawArgs) => {
+      const args = dataviewListByFolderArgsSchema.parse(rawArgs) as DataviewListByFolderArgs;
+      return listNotesByFolderDql(context, args);
+    },
   },
   {
     name: "dataview.table",
-    title: "Table Query (DQL)",
-    description: "Run a DQL TABLE query.",
-    inputSchema: z.object({
-      fields: z.array(z.string().min(1)).min(1),
-      fromClause: z.string().optional(),
-      whereClause: z.string().optional(),
-      sortBy: z.string().optional(),
-      limit: positiveIntSchema.optional(),
-    }),
+    title: "Run Dataview Table Query",
+    description:
+      "Convenience wrapper that runs `TABLE field1, field2, … FROM …` with optional `WHERE`, `SORT`, and `LIMIT` clauses. Use this when you need structured columnar output. Requires the Dataview and Local REST API plugins.",
+    inputSchema: dataviewTableArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY_OPEN_WORLD,
-    handler: (context, args) => tableQueryDql(context, args as Parameters<typeof tableQueryDql>[1]),
+    handler: async (context, rawArgs) => {
+      const args = dataviewTableArgsSchema.parse(rawArgs) as DataviewTableArgs;
+      return tableQueryDql(context, args);
+    },
+  },
+  {
+    name: "dataview.index",
+    title: "Read Dataview Index",
+    description:
+      "Parse a single note and return everything Dataview would index from it: page-level metadata (title, aliases, tags, frontmatter fields), list-item fields, task-line fields, and both DQL and DataviewJS block locations. Read-only, runs locally (does NOT require the Local REST API). Use this to understand what Dataview sees in a note without running a query.",
+    inputSchema: dataviewIndexArgsSchema,
+    outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
+    handler: async (context, rawArgs) => {
+      const args = dataviewIndexArgsSchema.parse(rawArgs) as DataviewIndexArgs;
+      return readDataviewIndex(context, args);
+    },
+  },
+  {
+    name: "dataview.fields.read",
+    title: "Read Dataview Fields",
+    description:
+      "Read Dataview fields from the vault. `op:'extract'` returns every field declared in a single note (page, list-item, and task-line fields combined). `op:'search'` scans the whole vault for notes whose fields match a `key` (and optionally a `value` coerced by `valueType`); use `scope` to restrict which field kinds are considered. Read-only. For mutating fields, use `dataview.fields.write`.",
+    inputSchema: dataviewFieldsReadArgsSchema,
+    outputSchema: looseObjectSchema,
+    annotations: READ_ONLY,
+    handler: async (context, rawArgs) => {
+      const args = dataviewFieldsReadArgsSchema.parse(rawArgs) as DataviewFieldsReadArgs;
+      if (args.op === "extract") {
+        const { op: _op, ...rest } = args;
+        return extractDataviewFieldsFromFile(context, rest);
+      }
+      const { op: _op, ...rest } = args;
+      return searchByDataviewField(context, rest);
+    },
+  },
+  {
+    name: "dataview.fields.write",
+    title: "Write Dataview Fields",
+    description:
+      "Insert or remove a Dataview field in a single note. `op:'add'` inserts a `key:: value` field; `syntaxType` picks the rendering (`full-line` = own line; `bracket` = `[key:: value]`; `paren` = `(key:: value)`); `insertAt` chooses placement (`start`, `end`, `afterFrontmatter`) unless `lineNumber` is given for precise control. `op:'remove'` deletes every occurrence of `key` (optionally restricted to a single `lineNumber` or a Dataview `scope`). Idempotent — re-running with the same args converges on the same document state.",
+    inputSchema: dataviewFieldsWriteArgsSchema,
+    outputSchema: mutationResultSchema,
+    annotations: IDEMPOTENT_ADDITIVE,
+    handler: async (context, rawArgs) => {
+      const args = dataviewFieldsWriteArgsSchema.parse(rawArgs) as DataviewFieldsWriteArgs;
+      if (args.op === "add") {
+        const { op: _op, ...rest } = args;
+        return addDataviewField(context, rest);
+      }
+      const { op: _op, ...rest } = args;
+      return removeDataviewField(context, rest);
+    },
+    inputExamples: [
+      {
+        description: "Add a full-line priority field after the frontmatter",
+        input: {
+          op: "add",
+          filePath: "Projects/Alpha.md",
+          key: "priority",
+          value: "high",
+          syntaxType: "full-line",
+          insertAt: "afterFrontmatter",
+        },
+      },
+      {
+        description: "Remove every occurrence of the `status` field from a note",
+        input: { op: "remove", filePath: "Projects/Alpha.md", key: "status", scope: "all" },
+      },
+    ],
   },
 ];

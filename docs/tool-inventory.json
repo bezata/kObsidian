@@ -2,625 +2,594 @@
   {
     "name": "notes.read",
     "title": "Read Note",
-    "description": "Read a note from the vault with parsed metadata.",
+    "description": "Read a note and return any combination of its body, parsed frontmatter metadata, and lightweight statistics. `include` selects which sections to return — default is `['content', 'metadata']`. Ask for `['stats']` alone when you only need word/character/heading/link/task counts and want to skip loading the full body. Read-only. Fails with `not_found` when `path` does not exist.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "notes.create",
-    "title": "Create Note",
-    "description": "Create a new note using filesystem-first behavior."
+    "title": "Create Note Or Folder",
+    "description": "Create a new note or folder in the vault. `kind:'note'` creates a markdown note at `path` with the given `content`; `ifExists` controls collision behavior (`error` = fail, default; `replace` = overwrite; `skip` = no-op). `kind:'folder'` creates a directory at `path` (intermediate folders are created automatically; idempotent — re-creating an existing folder is a no-op). Returns the standard mutation envelope.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
   },
   {
-    "name": "notes.update",
-    "title": "Update Note",
-    "description": "Update an existing note, replacing or appending content."
+    "name": "notes.edit",
+    "title": "Edit Note",
+    "description": "Mutate the body of an existing note. The `mode` field selects how `content` is applied: `replace` overwrites the whole note; `append` adds to the end; `prepend` adds after the frontmatter (or at the top if none); `after-heading` inserts after the first heading whose text matches `anchor` (no leading `#`); `after-block` inserts after the block reference `^anchor`. Fails if the note does not exist — use `notes.create` first. `replace` mode is idempotent-destructive; the others are additive.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "notes.frontmatter",
+    "title": "Edit Frontmatter",
+    "description": "Set or unset fields in a note's YAML frontmatter. `set` is a map of `{field: value}` pairs to write; `unset` is a list of field names to delete. `strategy:'merge'` (default) leaves unspecified fields untouched; `strategy:'replace'` overwrites the entire frontmatter block with `set` (any field not in `set` is dropped). At least one of `set` or `unset` is required. Idempotent — re-running with the same arguments converges on the same frontmatter state.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
   },
   {
     "name": "notes.delete",
     "title": "Delete Note",
-    "description": "Delete a note from the vault.",
+    "description": "Delete a note from the vault. Destructive — the file is removed from disk. Fails with `not_found` when the path does not exist. There is no undo; use with care. For folders, call `notes.move` to an archive location instead (folder deletion is not exposed as a tool to avoid accidental cascading deletes).",
     "annotations": {
-      "destructiveHint": true
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "notes.move",
+    "title": "Move Note Or Folder",
+    "description": "Move a note or folder to a new path. `kind:'note'` moves a single `.md` file; `kind:'folder'` moves a directory and every note beneath it. When `updateLinks:true` (the default), wiki and markdown links elsewhere in the vault that reference the moved path are rewritten to point at the new location. Destructive — overwrites or replaces existing content at the destination. Fails when the source does not exist.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "notes.list",
+    "title": "List Notes And Folders",
+    "description": "List notes and/or folders in the vault, optionally scoped to a `folder` and filtered by creation/modification date. `include` selects what to return (`notes`, `folders`, or `both`). `recursive:true` descends into subfolders. `since`/`until` (ISO dates) combined with `dateField` (`created` or `modified`, default `modified`) narrow the result by date. Read-only.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "notes.search",
     "title": "Search Notes",
-    "description": "Search notes by text with lightweight support for tag: and path: filters.",
+    "description": "Full-text search across every note in the vault. The `query` supports plain text and lightweight prefix filters: `tag:foo` restricts to notes carrying `#foo`, and `path:Journal/` restricts to notes under a folder. `contextLength` controls how many characters of surrounding context are returned per match (default 80). Read-only. For pure tag or date filtering, `tags.search` and `notes.list` are faster.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
-    "name": "notes.searchByDate",
-    "title": "Search Notes By Date",
-    "description": "List notes by created or modified date.",
+    "name": "tags.modify",
+    "title": "Modify Tags",
+    "description": "Mutate the frontmatter `tags` list of a single note. Four ops are supported: `add` unions the incoming tags with the existing list (duplicates dropped); `remove` drops any incoming tag currently present; `replace` overwrites the list entirely; `merge` is an alias for `add`. Leading `#` on incoming tags is stripped automatically. This tool only touches the frontmatter block — inline `#tag` occurrences in the body are left untouched. Idempotent: repeated calls with the same op and tags converge on the same result. Returns `{changed, target, summary, op, tagsAfter}`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
-  },
-  {
-    "name": "notes.list",
-    "title": "List Notes",
-    "description": "List notes in the vault or a folder.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "notes.listFolders",
-    "title": "List Folders",
-    "description": "List folders in the vault.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "notes.move",
-    "title": "Move Note",
-    "description": "Move a note and optionally update links that reference it.",
-    "annotations": {
-      "destructiveHint": true
-    }
-  },
-  {
-    "name": "notes.createFolder",
-    "title": "Create Folder",
-    "description": "Create a folder in the vault.",
-    "annotations": {
-      "idempotentHint": true
-    }
-  },
-  {
-    "name": "notes.moveFolder",
-    "title": "Move Folder",
-    "description": "Move a folder and optionally update links inside the vault.",
-    "annotations": {
-      "destructiveHint": true
-    }
-  },
-  {
-    "name": "notes.info",
-    "title": "Note Info",
-    "description": "Get note metadata and lightweight statistics without loading the result into a client-specific schema.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "notes.insertAfterHeading",
-    "title": "Insert After Heading",
-    "description": "Insert content immediately after a markdown heading."
-  },
-  {
-    "name": "notes.insertAfterBlock",
-    "title": "Insert After Block",
-    "description": "Insert content after a block reference."
-  },
-  {
-    "name": "notes.updateFrontmatter",
-    "title": "Update Frontmatter",
-    "description": "Create or update a frontmatter field.",
-    "annotations": {
-      "idempotentHint": true
-    }
-  },
-  {
-    "name": "notes.append",
-    "title": "Append To Note",
-    "description": "Append content to the end of a note."
-  },
-  {
-    "name": "tags.analyze",
-    "title": "Analyze Tags",
-    "description": "Extract frontmatter and inline tags from a note.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "tags.add",
-    "title": "Add Tags",
-    "description": "Add tags to a note frontmatter block."
-  },
-  {
-    "name": "tags.update",
-    "title": "Update Tags",
-    "description": "Replace or merge a note's frontmatter tags."
-  },
-  {
-    "name": "tags.remove",
-    "title": "Remove Tags",
-    "description": "Remove tags from frontmatter."
   },
   {
     "name": "tags.search",
-    "title": "Search By Tag",
-    "description": "Find notes that contain a tag in frontmatter or inline content.",
+    "title": "Search Notes By Tag",
+    "description": "Find every note in the vault that contains a given tag, either in frontmatter `tags` or as an inline `#tag` in the body. Leading `#` on the query is stripped. For each hit, the result carries `{file, absolutePath, tagLocations: {frontmatter, inline}}` so callers can distinguish where the tag came from. Read-only. For analyzing tags of ONE specific note (not a vault-wide search), use `tags.analyze` instead.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "tags.analyze",
+    "title": "Analyze Note Tags",
+    "description": "Return the tags present in a single note, split into `frontmatterTags`, `inlineTags`, and their de-duplicated union `allTags`. Use this when you have one note and want to know what tags it carries — contrast with `tags.search`, which scans the whole vault for one specific tag. Read-only.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "tags.list",
-    "title": "List Tags",
-    "description": "List unique tags used across the vault.",
+    "title": "List All Tags",
+    "description": "List every unique tag used across the vault (frontmatter and inline combined). With `includeCounts: true`, each item includes how many notes carry the tag; `sortBy` lets you sort by `name` or `count` (the latter requires counts). Read-only. For finding notes carrying a specific tag, use `tags.search`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.backlinks",
     "title": "Get Backlinks",
-    "description": "Find notes that link to a target note.",
+    "description": "Find every note that links TO a target note (inbound references). Supports both wiki-style `[[Note]]` and markdown-style `[text](Note.md)` links. When `includeContext:true`, each result carries a `contextLength`-char snippet of surrounding text so the agent can judge link intent without re-reading each source. Read-only. For outbound links (what a note points AT), use `links.outgoing`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.outgoing",
     "title": "Get Outgoing Links",
-    "description": "Extract links referenced by a note.",
+    "description": "Extract every link FROM a note (outbound references) — wiki-style `[[…]]` and markdown-style `[…](…)`. When `checkValidity:true`, each entry carries a `valid` flag indicating whether the target path resolves in the vault. Read-only. For inbound references (what points AT the note), use `links.backlinks`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.broken",
     "title": "Find Broken Links",
-    "description": "Find broken note links in the vault or a folder.",
+    "description": "Find every link in the vault (or a `directory` subtree) whose target does not resolve to an existing note. Each result carries the source file, line number, link text, and unresolved target. Read-only. Pair with `notes.move` (with `updateLinks:true`) to fix them after moves.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.graph",
     "title": "Get Link Graph",
-    "description": "Build the vault link graph.",
+    "description": "Build a full vault link graph: every note becomes a node, every outbound link becomes a directed edge. Return shape is `{nodes, edges, stats}` where nodes carry basic metadata (path, title) and edges carry source/target and link kind. Expensive for large vaults — prefer `links.backlinks`, `links.outgoing`, or `links.connections` for targeted queries. Read-only.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.orphaned",
     "title": "Find Orphaned Notes",
-    "description": "Find notes with no incoming or outgoing links.",
+    "description": "Return every note with zero incoming AND zero outgoing links — i.e., notes that are disconnected from the rest of the vault graph. Useful for cleanup passes. Read-only. Often paired with `links.hubs` and `links.broken` in a weekly vault-health routine.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.hubs",
     "title": "Find Hub Notes",
-    "description": "Find notes with many outgoing links.",
+    "description": "Return notes with at least `minOutlinks` outgoing links (default 10) — the vault's connective tissue / MOCs / indexes. Each result carries the path, title, outbound-link count, and inbound-link count. Read-only.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.health",
     "title": "Analyze Link Health",
-    "description": "Summarize link density and broken-link metrics.",
+    "description": "Summarise link health for the whole vault: total link count, broken-link count and ratio, orphan-note count, average outbound/inbound link density, and a list of the top hub notes. Read-only. Use this as a dashboard check; call `links.broken`/`links.orphaned`/`links.hubs` for the full per-item lists.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "links.connections",
-    "title": "Get Note Connections",
-    "description": "Explore direct and multi-hop note connections.",
+    "title": "Explore Note Connections",
+    "description": "Explore the graph neighbourhood around a seed note — direct and multi-hop connections up to `depth` hops (default 2). Returns the set of reachable notes plus the paths that reach them. Higher `depth` values blow up result size quickly; keep it ≤3 unless you know the graph is sparse. Read-only.",
     "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "stats.note",
-    "title": "Note Statistics",
-    "description": "Get statistics for a single note.",
-    "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "stats.vault",
     "title": "Vault Statistics",
-    "description": "Get aggregate statistics for the whole vault.",
+    "description": "Return aggregate statistics for the whole vault: total note count, total word count, total character count, total task count (open and completed), tag usage summary, and file size footprint. Read-only, scans every `.md` file. For per-note statistics use `notes.read` with `include: ['stats']`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "tasks.search",
     "title": "Search Tasks",
-    "description": "Search Tasks-plugin style markdown tasks across the vault.",
+    "description": "Scan the vault for Tasks-plugin-style markdown task lines (`- [ ]` / `- [x]`) and filter by status, priority, due date range, recurrence, or tag. Result items include the task text, source file, line number, status, and parsed metadata — enough to locate and further manipulate each task via `tasks.toggle` or `tasks.updateMetadata`. `sortBy` controls ordering; `limit` caps the result count. Read-only. For vault-wide counts without per-task detail, use `tasks.stats`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "tasks.create",
     "title": "Create Task",
-    "description": "Append a task line to a note."
+    "description": "Append a new task line to a note. The task is written in Tasks-plugin format: `- [ ] <content> {metadata emojis}`. Optional metadata (`priority`, `dueDate`, `scheduledDate`, `startDate`, `doneDate`, `createdDate`, `recurrence`) is encoded as the plugin's convention emojis (🔺⏫📅⏳🛫✅➕🔁). Returns the standard mutation envelope with the 1-based `lineNumber` where the task was inserted.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
   },
   {
     "name": "tasks.toggle",
-    "title": "Toggle Task",
-    "description": "Toggle a task complete/incomplete by file and line number."
+    "title": "Toggle Task Status",
+    "description": "Flip a task line between `[ ]` and `[x]` in place, identified by `sourceFile` and 1-based `lineNumber`. When marking a task done, a `✅ YYYY-MM-DD` date is stamped into the line (default today; override with `doneDate`). Fails if the target line is not a task checkbox. Use `tasks.search` to find the right `sourceFile`/`lineNumber` pair.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
   },
   {
     "name": "tasks.updateMetadata",
     "title": "Update Task Metadata",
-    "description": "Update task dates, priority, or recurrence in place.",
+    "description": "Update a task's dates, priority, or recurrence expression in place without touching the task body text. Identified by `sourceFile` + 1-based `lineNumber`. Pass only the fields you want to change. Idempotent — re-running with identical inputs converges on the same line. Fails if the target line is not a task.",
     "annotations": {
-      "idempotentHint": true
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "tasks.stats",
     "title": "Task Statistics",
-    "description": "Get aggregate task statistics for the vault.",
+    "description": "Return aggregate task statistics for the whole vault: total tasks, incomplete count, completed count, overdue count (due date passed and still incomplete), upcoming counts by horizon (today/this-week/next-week), and per-priority breakdown. Read-only. Use `tasks.search` to get the individual task records.",
     "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "dataview.index.read",
-    "title": "Read Dataview Index",
-    "description": "Read page, list-item, task, DQL, and DataviewJS metadata from a note.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "dataview.fields.extract",
-    "title": "Extract Dataview Fields",
-    "description": "Extract scoped Dataview fields from a note.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "dataview.fields.search",
-    "title": "Search Dataview Fields",
-    "description": "Search notes by Dataview field key and optional value.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "dataview.fields.add",
-    "title": "Add Dataview Field",
-    "description": "Insert a Dataview field into a note."
-  },
-  {
-    "name": "dataview.fields.remove",
-    "title": "Remove Dataview Field",
-    "description": "Remove a Dataview field from a note."
-  },
-  {
-    "name": "dataview.query.read",
-    "title": "Read Dataview Query Blocks",
-    "description": "Extract fenced dataview DQL blocks from a note.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "dataview.query.update",
-    "title": "Update Dataview Query Block",
-    "description": "Replace one fenced dataview DQL block source-preservingly.",
-    "annotations": {
-      "idempotentHint": true
-    }
-  },
-  {
-    "name": "dataview.js.read",
-    "title": "Read DataviewJS Blocks",
-    "description": "Extract fenced dataviewjs blocks from a note without executing them.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "dataview.js.update",
-    "title": "Update DataviewJS Block",
-    "description": "Replace one fenced dataviewjs block source-preservingly.",
-    "annotations": {
-      "idempotentHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "dataview.query",
     "title": "Run Dataview Query",
-    "description": "Execute a Dataview Query Language (DQL) query through the Obsidian API.",
+    "description": "Execute an arbitrary Dataview Query Language (DQL) query through the Obsidian Local REST API. The query string is raw DQL — e.g. `LIST FROM #inbox`, `TASK WHERE !completed`, `TABLE file.mtime FROM \"Journal\"`. Requires the Dataview plugin to be enabled in Obsidian and the Local REST API plugin to be configured (OBSIDIAN_API_URL/OBSIDIAN_REST_API_KEY). For common patterns (list-by-tag, list-by-folder, table) the sugar tools `dataview.listByTag`/`listByFolder`/`table` are easier to use — prefer those when applicable and fall back to `dataview.query` for custom DQL.",
     "annotations": {
       "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true
     }
   },
   {
     "name": "dataview.listByTag",
-    "title": "List Notes By Tag (DQL)",
-    "description": "Run a DQL LIST query for a tag.",
+    "title": "List Notes By Tag",
+    "description": "Convenience wrapper that runs `LIST FROM #tag` (optionally with `WHERE`, `SORT`, and `LIMIT` clauses). Returns the same shape as `dataview.query`. Requires the Dataview and Local REST API plugins. Use this instead of authoring raw DQL when filtering by a single tag.",
     "annotations": {
       "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true
     }
   },
   {
     "name": "dataview.listByFolder",
-    "title": "List Notes By Folder (DQL)",
-    "description": "Run a DQL LIST query for a folder.",
+    "title": "List Notes By Folder",
+    "description": "Convenience wrapper that runs `LIST FROM \"folder\"` (optionally with `WHERE`, `SORT`, and `LIMIT` clauses). Useful when you want every note under a vault folder. Requires the Dataview and Local REST API plugins.",
     "annotations": {
       "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true
     }
   },
   {
     "name": "dataview.table",
-    "title": "Table Query (DQL)",
-    "description": "Run a DQL TABLE query.",
+    "title": "Run Dataview Table Query",
+    "description": "Convenience wrapper that runs `TABLE field1, field2, … FROM …` with optional `WHERE`, `SORT`, and `LIMIT` clauses. Use this when you need structured columnar output. Requires the Dataview and Local REST API plugins.",
     "annotations": {
       "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true
     }
   },
   {
-    "name": "mermaid.blocks.list",
-    "title": "List Mermaid Blocks",
-    "description": "List fenced Mermaid blocks in a note or across the vault.",
+    "name": "dataview.index",
+    "title": "Read Dataview Index",
+    "description": "Parse a single note and return everything Dataview would index from it: page-level metadata (title, aliases, tags, frontmatter fields), list-item fields, task-line fields, and both DQL and DataviewJS block locations. Read-only, runs locally (does NOT require the Local REST API). Use this to understand what Dataview sees in a note without running a query.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
-    "name": "mermaid.blocks.read",
-    "title": "Read Mermaid Block",
-    "description": "Read one Mermaid block with source spans, directives, and config metadata.",
+    "name": "dataview.fields.read",
+    "title": "Read Dataview Fields",
+    "description": "Read Dataview fields from the vault. `op:'extract'` returns every field declared in a single note (page, list-item, and task-line fields combined). `op:'search'` scans the whole vault for notes whose fields match a `key` (and optionally a `value` coerced by `valueType`); use `scope` to restrict which field kinds are considered. Read-only. For mutating fields, use `dataview.fields.write`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
-    "name": "mermaid.blocks.update",
-    "title": "Update Mermaid Block",
-    "description": "Replace one fenced Mermaid block source-preservingly.",
+    "name": "dataview.fields.write",
+    "title": "Write Dataview Fields",
+    "description": "Insert or remove a Dataview field in a single note. `op:'add'` inserts a `key:: value` field; `syntaxType` picks the rendering (`full-line` = own line; `bracket` = `[key:: value]`; `paren` = `(key:: value)`); `insertAt` chooses placement (`start`, `end`, `afterFrontmatter`) unless `lineNumber` is given for precise control. `op:'remove'` deletes every occurrence of `key` (optionally restricted to a single `lineNumber` or a Dataview `scope`). Idempotent — re-running with the same args converges on the same document state.",
     "annotations": {
-      "idempotentHint": true
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
-    "name": "marp.deck.read",
+    "name": "blocks.list",
+    "title": "List Fenced Blocks",
+    "description": "List fenced code blocks of the supported knowledge-base languages (`dataview`, `dataviewjs`, `mermaid`) in a single note or across the vault. Use this to discover what DQL, DataviewJS, or Mermaid blocks exist before reading or updating them. Omit `language` to list blocks of all three types in one call. Vault-wide scanning is only supported for Mermaid; for Dataview languages a `filePath` is required. Returns `{total, items}` where each item carries at minimum `{filePath, language, index, id?}`. Read-only.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "blocks.read",
+    "title": "Read Fenced Block",
+    "description": "Read one fenced block's source and language-specific metadata. Locate the block by `blockId` (preferred, stable) or `index` (0-based within the language group in the file; defaults to 0). `language` is required so the tool can dispatch to the correct parser and return the right metadata (Mermaid directives, Dataview DQL parts, etc.). Fails with `not_found` when no block matches the locator. Read-only.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "blocks.update",
+    "title": "Update Fenced Block",
+    "description": "Replace one fenced block's body source-preservingly — the surrounding fences, language tag, and neighbouring content are untouched. Locate the block by `blockId` or `index`. `language` acts as a guard: if the located block is not of the declared language, the update fails. `source` is the replacement body WITHOUT the surrounding ``` fences. Idempotent — re-running with identical inputs is a no-op on the file contents. Destructive — overwrites the previous block body in place.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "marp.read",
     "title": "Read Marp Deck",
-    "description": "Read Marp deck frontmatter, slides, directives, and source spans.",
+    "description": "Read some or all of a Marp presentation deck (a markdown file with `marp: true` frontmatter and `---` slide separators). The `part` field selects what to return: `deck` returns the whole deck (frontmatter, all slides, directives); `slides` returns a list of slide summaries (separator and directive metadata, no body); `slide` returns one slide's full source, located by `slideId` or 0-based `index`. Output shape varies by `part` — see the description of each variant. Read-only. Use `marp.update` to mutate.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
-    "name": "marp.slides.list",
-    "title": "List Marp Slides",
-    "description": "List Marp slides with separator and directive metadata.",
+    "name": "marp.update",
+    "title": "Update Marp Deck",
+    "description": "Mutate a Marp deck in place. `part:'slide'` replaces one slide's body (located by `slideId` or `index`) without touching neighbouring slides. `part:'frontmatter'` merges `fields` into the deck's frontmatter — unspecified fields are preserved; pass `null` to a field to unset it. Idempotent — re-running with identical inputs is a no-op on the file contents. Destructive — overwrites in place.",
     "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "marp.slides.read",
-    "title": "Read Marp Slide",
-    "description": "Read one Marp slide source-preservingly.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "marp.slides.update",
-    "title": "Update Marp Slide",
-    "description": "Replace one Marp slide body without rewriting neighboring slides.",
-    "annotations": {
-      "idempotentHint": true
-    }
-  },
-  {
-    "name": "marp.frontmatter.update",
-    "title": "Update Marp Frontmatter",
-    "description": "Update selected Marp deck frontmatter fields while preserving unrelated source.",
-    "annotations": {
-      "idempotentHint": true
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "kanban.parse",
     "title": "Parse Kanban Board",
-    "description": "Parse a markdown Kanban board file.",
+    "description": "Parse a markdown Kanban board file into its column/card structure. Use this when you need the full board content — each column's name and its cards with their completion state. Works with the obsidian-kanban plugin's markdown format. Read-only. For completion counts and ratios instead of the full card list, use `kanban.stats`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
-  },
-  {
-    "name": "kanban.addCard",
-    "title": "Add Kanban Card",
-    "description": "Add a card to a Kanban column."
-  },
-  {
-    "name": "kanban.moveCard",
-    "title": "Move Kanban Card",
-    "description": "Move a card between Kanban columns."
-  },
-  {
-    "name": "kanban.toggleCard",
-    "title": "Toggle Kanban Card",
-    "description": "Toggle a Kanban card complete/incomplete."
   },
   {
     "name": "kanban.stats",
-    "title": "Kanban Statistics",
-    "description": "Get card counts and completion rates for a Kanban board.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "templates.expand",
-    "title": "Expand Template",
-    "description": "Expand filesystem template variables into content.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "templates.createNote",
-    "title": "Create Note From Template",
-    "description": "Create a note from a filesystem template."
-  },
-  {
-    "name": "templates.list",
-    "title": "List Templates",
-    "description": "List markdown templates in a folder.",
-    "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "templates.renderTemplater",
-    "title": "Render Templater Template",
-    "description": "Render a Templater template via the Obsidian API.",
+    "title": "Kanban Board Statistics",
+    "description": "Summarise a Kanban board: total cards, completed count, incomplete count, completion rate, and per-column breakdown. Use this for dashboards or progress checks where you don't need each card's full text. Read-only. Use `kanban.parse` when you need the actual card content.",
     "annotations": {
       "readOnlyHint": true,
-      "openWorldHint": true
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
-    "name": "templates.createNoteTemplater",
-    "title": "Create Note From Templater",
-    "description": "Create a note from a Templater template via the Obsidian API.",
+    "name": "kanban.card",
+    "title": "Modify Kanban Card",
+    "description": "Add, move, or toggle a card on a Kanban board. The `op` field selects the mutation and determines which other fields are required: `add` needs `columnName` and `cardText` (plus optional `status`, `dueDate`, `position`); `move` needs `cardText`, `fromColumn`, `toColumn` (plus optional `position`); `toggle` needs `cardText` (plus optional `columnName` to scope the search). Missing destination columns are created automatically. Returns a `{changed, target, summary, ...}` mutation envelope.",
     "annotations": {
-      "openWorldHint": true
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
     }
   },
   {
-    "name": "templates.insertTemplater",
-    "title": "Insert Templater Template",
-    "description": "Insert a Templater template into the active note.",
+    "name": "canvas.create",
+    "title": "Create Canvas",
+    "description": "Create a new empty Obsidian canvas (`.canvas`) file at the given path. Fails if the path already exists unless `overwrite: true` is passed. Canvas files are JSON documents that Obsidian renders as an infinite spatial whiteboard of nodes and edges. Use `canvas.edit` to add nodes/edges once the file exists.",
     "annotations": {
-      "openWorldHint": true
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
     }
   },
   {
     "name": "canvas.parse",
     "title": "Parse Canvas",
-    "description": "Parse an Obsidian canvas file.",
+    "description": "Parse an Obsidian canvas file and return its full structure: every node (text, file, link, group) and every edge. Use this when you need the complete graph; for just the neighbours of a specific node, call `canvas.connections` instead. Read-only.",
     "annotations": {
-      "readOnlyHint": true
-    }
-  },
-  {
-    "name": "canvas.addNode",
-    "title": "Add Canvas Node",
-    "description": "Add a text or file node to an Obsidian canvas.",
-    "annotations": {
-      "idempotentHint": true
-    }
-  },
-  {
-    "name": "canvas.addEdge",
-    "title": "Add Canvas Edge",
-    "description": "Connect two nodes in a canvas.",
-    "annotations": {
-      "idempotentHint": true
-    }
-  },
-  {
-    "name": "canvas.removeNode",
-    "title": "Remove Canvas Node",
-    "description": "Remove a node and its edges from a canvas.",
-    "annotations": {
-      "destructiveHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "canvas.connections",
     "title": "Canvas Node Connections",
-    "description": "Get incoming and outgoing edges for a canvas node.",
+    "description": "Return the incoming and outgoing edges of a single canvas node. Use this to walk the canvas graph one node at a time without loading the full document. Read-only. For full-graph parsing, use `canvas.parse`.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "canvas.edit",
+    "title": "Edit Canvas",
+    "description": "Mutate a canvas: add a node, add an edge, or remove a node. The `op` field selects the mutation. `add-node` needs `nodeType` (`text` for inline markdown or `file` for an embedded note), `content`, `x`, `y` (plus optional `width`/`height`). `add-edge` needs `fromNode` and `toNode` ids (plus optional `label`). `remove-node` needs `nodeId` — removing a node also removes every edge incident to it (destructive). Returns a standard mutation envelope.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "templates.list",
+    "title": "List Templates",
+    "description": "List markdown templates in the vault's templates folder (or a folder of your choosing via `templateFolder`). Use this to discover what templates are available before calling `templates.use`. Read-only. Only returns markdown (`.md`) files.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "templates.use",
+    "title": "Use Template",
+    "description": "Render or apply a template using one of two engines. The `engine` field selects the engine and the `action` field selects the operation:\n\n- `engine:'filesystem'` — kObsidian's built-in `{{variable}}` substitution; no Obsidian plugin required. Actions: `render` (return the expanded text) or `create-note` (write a new note from the template).\n- `engine:'templater'` — delegate to the Templater Obsidian plugin via the Local REST API. Requires OBSIDIAN_API_URL and OBSIDIAN_REST_API_KEY. Actions: `render` (execute the template and return output), `create-note` (execute and write to `targetFile`), or `insert-active` (insert into the currently active note in Obsidian).\n\nThe `filesystem` engine is pure text substitution — it does NOT evaluate Templater's `<% … %>` scripts. Use `engine:'templater'` when you need dynamic evaluation.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
     }
   },
   {
     "name": "workspace.activeFile",
     "title": "Get Active File",
-    "description": "Get the currently active file in Obsidian.",
+    "description": "Return information about the file currently open and focused in Obsidian — its path, modification time, and whether it's in edit or preview mode. Read-only. Requires the Local REST API plugin (OBSIDIAN_API_URL/OBSIDIAN_REST_API_KEY). Use this to orient the agent before issuing other workspace-level mutations.",
     "annotations": {
       "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true
     }
   },
   {
     "name": "workspace.openFile",
-    "title": "Open File",
-    "description": "Open a file in Obsidian.",
+    "title": "Open File In Obsidian",
+    "description": "Open a vault-relative note path in the live Obsidian UI. `newPane:true` opens in a split; otherwise the current pane is reused. Requires the Local REST API plugin. This tool mutates the UI but does not touch file contents.",
     "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": true
     }
   },
   {
     "name": "workspace.closeActiveFile",
     "title": "Close Active File",
-    "description": "Close the active file in Obsidian.",
+    "description": "Close the currently active file in Obsidian. Does not affect file contents — only the UI. Requires the Local REST API plugin.",
     "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": true
     }
   },
   {
-    "name": "workspace.navigateBack",
-    "title": "Navigate Back",
-    "description": "Go back in Obsidian history.",
+    "name": "workspace.navigate",
+    "title": "Navigate Obsidian History",
+    "description": "Navigate the Obsidian back/forward file history, like the arrow buttons in the top-left. `direction:'back'` = back one step; `direction:'forward'` = forward one step. No-op when the stack is empty in the given direction. Requires the Local REST API plugin.",
     "annotations": {
-      "openWorldHint": true
-    }
-  },
-  {
-    "name": "workspace.navigateForward",
-    "title": "Navigate Forward",
-    "description": "Go forward in Obsidian history.",
-    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": true
     }
   },
   {
     "name": "workspace.toggleEditMode",
     "title": "Toggle Edit Mode",
-    "description": "Toggle edit/preview mode in Obsidian.",
+    "description": "Toggle the active file between edit (source) and preview (reading) mode in Obsidian. Requires the Local REST API plugin.",
     "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": true
     }
   },
   {
     "name": "commands.execute",
-    "title": "Execute Command",
-    "description": "Execute an Obsidian command by ID.",
+    "title": "Execute Obsidian Command",
+    "description": "Execute an Obsidian command by its internal id (as returned by `commands.list`). `args` is an optional argument map passed to the command (most built-in commands take no arguments). Requires the Local REST API plugin. Destructive — the effect depends entirely on what the command does, so verify the command id before calling.",
     "annotations": {
+      "readOnlyHint": false,
       "destructiveHint": true,
+      "idempotentHint": false,
       "openWorldHint": true
     }
   },
   {
     "name": "commands.list",
-    "title": "List Commands",
-    "description": "List all available Obsidian commands.",
+    "title": "List Or Search Obsidian Commands",
+    "description": "List Obsidian commands. With no `query`, returns every registered command (both built-in and plugin-provided). With a `query` string, returns commands whose id or display name matches — substring match, case-insensitive. Read-only. Use this to discover command ids before calling `commands.execute`. Requires the Local REST API plugin.",
     "annotations": {
       "readOnlyHint": true,
-      "openWorldHint": true
-    }
-  },
-  {
-    "name": "commands.search",
-    "title": "Search Commands",
-    "description": "Search Obsidian commands by ID or name.",
-    "annotations": {
-      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true
     }
   },
@@ -629,13 +598,16 @@
     "title": "Initialize Wiki",
     "description": "Scaffold the wiki layout: Sources/, Concepts/, Entities/ folders plus seed index.md, log.md, and wiki-schema.md. Idempotent; use force:true to re-seed index/log/schema files.",
     "annotations": {
-      "idempotentHint": true
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "wiki.ingest",
     "title": "Ingest Source",
-    "description": "File a new source into the wiki: create Sources/<slug>.md with canonical frontmatter, append a log entry, and return proposedEdits for index + related concept/entity pages for the LLM to apply via notes.update."
+    "description": "File a new source into the wiki: create Sources/<slug>.md with canonical frontmatter, append a log entry, and return proposedEdits for index + related concept/entity pages for the LLM to apply via notes.create (for new stubs) or notes.edit (mode: 'after-heading' / 'append' for inserts into existing pages)."
   },
   {
     "name": "wiki.logAppend",
@@ -647,8 +619,10 @@
     "title": "Rebuild Wiki Index",
     "description": "Regenerate the wiki index.md from the current state of Sources/, Concepts/, and Entities/. Groups entries by category; supports optional per-category counts.",
     "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
-      "destructiveHint": true
+      "openWorldHint": false
     }
   },
   {
@@ -656,7 +630,10 @@
     "title": "Query Wiki",
     "description": "Rank wiki pages relevant to a topic using filename, alias, tag, summary and body hits. Returns the top pages so the LLM can drill in with notes.read.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
@@ -664,12 +641,26 @@
     "title": "Lint Wiki",
     "description": "Health-check the wiki: orphans, broken links, stale sources, missing concept pages, singleton tags, and index.md parity. Read-only; returns grouped findings with totals.",
     "annotations": {
-      "readOnlyHint": true
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
     }
   },
   {
     "name": "wiki.summaryMerge",
     "title": "Merge Summary Into Concept Or Entity Page",
     "description": "Add a cited section into an existing concept or entity page (or create the page with canonical frontmatter if missing). Bumps 'updated' on existing pages."
+  },
+  {
+    "name": "system.version",
+    "title": "Server Version",
+    "description": "Return the running kObsidian server's package name, semver version, host runtime (`bun` or `node`), and runtime version. Use this as a health-check or to confirm which server build a client is talking to. Read-only; zero side effects.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
   }
 ]

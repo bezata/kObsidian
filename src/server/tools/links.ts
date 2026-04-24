@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   analyzeLinkHealth,
   findBrokenLinks,
@@ -9,7 +8,24 @@ import {
   getNoteConnections,
   getOutgoingLinks,
 } from "../../domain/links.js";
-import { notePathSchema, positiveIntSchema } from "../../schema/primitives.js";
+import {
+  type LinksBacklinksArgs,
+  type LinksBrokenArgs,
+  type LinksConnectionsArgs,
+  type LinksGraphArgs,
+  type LinksHealthArgs,
+  type LinksHubsArgs,
+  type LinksOrphanedArgs,
+  type LinksOutgoingArgs,
+  linksBacklinksArgsSchema,
+  linksBrokenArgsSchema,
+  linksConnectionsArgsSchema,
+  linksGraphArgsSchema,
+  linksHealthArgsSchema,
+  linksHubsArgsSchema,
+  linksOrphanedArgsSchema,
+  linksOutgoingArgsSchema,
+} from "../../schema/links.js";
 import type { ToolDefinition } from "../tool-definition.js";
 import { READ_ONLY, listResultSchema, looseObjectSchema } from "../tool-schemas.js";
 
@@ -17,94 +33,105 @@ export const linkTools: ToolDefinition[] = [
   {
     name: "links.backlinks",
     title: "Get Backlinks",
-    description: "Find notes that link to a target note.",
-    inputSchema: z.object({
-      path: notePathSchema,
-      includeContext: z.boolean().optional(),
-      contextLength: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
+    description:
+      "Find every note that links TO a target note (inbound references). Supports both wiki-style `[[Note]]` and markdown-style `[text](Note.md)` links. When `includeContext:true`, each result carries a `contextLength`-char snippet of surrounding text so the agent can judge link intent without re-reading each source. Read-only. For outbound links (what a note points AT), use `links.outgoing`.",
+    inputSchema: linksBacklinksArgsSchema,
     outputSchema: listResultSchema,
     annotations: READ_ONLY,
-    handler: (context, args) => getBacklinks(context, args as Parameters<typeof getBacklinks>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksBacklinksArgsSchema.parse(rawArgs) as LinksBacklinksArgs;
+      return getBacklinks(context, args);
+    },
   },
   {
     name: "links.outgoing",
     title: "Get Outgoing Links",
-    description: "Extract links referenced by a note.",
-    inputSchema: z.object({
-      path: notePathSchema,
-      checkValidity: z.boolean().optional(),
-      vaultPath: z.string().optional(),
-    }),
+    description:
+      "Extract every link FROM a note (outbound references) — wiki-style `[[…]]` and markdown-style `[…](…)`. When `checkValidity:true`, each entry carries a `valid` flag indicating whether the target path resolves in the vault. Read-only. For inbound references (what points AT the note), use `links.backlinks`.",
+    inputSchema: linksOutgoingArgsSchema,
     outputSchema: listResultSchema,
     annotations: READ_ONLY,
-    handler: (context, args) =>
-      getOutgoingLinks(context, args as Parameters<typeof getOutgoingLinks>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksOutgoingArgsSchema.parse(rawArgs) as LinksOutgoingArgs;
+      return getOutgoingLinks(context, args);
+    },
   },
   {
     name: "links.broken",
     title: "Find Broken Links",
-    description: "Find broken note links in the vault or a folder.",
-    inputSchema: z.object({ directory: z.string().optional(), vaultPath: z.string().optional() }),
+    description:
+      "Find every link in the vault (or a `directory` subtree) whose target does not resolve to an existing note. Each result carries the source file, line number, link text, and unresolved target. Read-only. Pair with `notes.move` (with `updateLinks:true`) to fix them after moves.",
+    inputSchema: linksBrokenArgsSchema,
     outputSchema: listResultSchema,
     annotations: READ_ONLY,
-    handler: (context, args) =>
-      findBrokenLinks(context, args as Parameters<typeof findBrokenLinks>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksBrokenArgsSchema.parse(rawArgs) as LinksBrokenArgs;
+      return findBrokenLinks(context, args);
+    },
   },
   {
     name: "links.graph",
     title: "Get Link Graph",
-    description: "Build the vault link graph.",
-    inputSchema: z.object({ vaultPath: z.string().optional() }),
+    description:
+      "Build a full vault link graph: every note becomes a node, every outbound link becomes a directed edge. Return shape is `{nodes, edges, stats}` where nodes carry basic metadata (path, title) and edges carry source/target and link kind. Expensive for large vaults — prefer `links.backlinks`, `links.outgoing`, or `links.connections` for targeted queries. Read-only.",
+    inputSchema: linksGraphArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY,
-    handler: (context, args) => getLinkGraph(context, args as Parameters<typeof getLinkGraph>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksGraphArgsSchema.parse(rawArgs) as LinksGraphArgs;
+      return getLinkGraph(context, args);
+    },
   },
   {
     name: "links.orphaned",
     title: "Find Orphaned Notes",
-    description: "Find notes with no incoming or outgoing links.",
-    inputSchema: z.object({ vaultPath: z.string().optional() }),
+    description:
+      "Return every note with zero incoming AND zero outgoing links — i.e., notes that are disconnected from the rest of the vault graph. Useful for cleanup passes. Read-only. Often paired with `links.hubs` and `links.broken` in a weekly vault-health routine.",
+    inputSchema: linksOrphanedArgsSchema,
     outputSchema: listResultSchema,
     annotations: READ_ONLY,
-    handler: (context, args) =>
-      findOrphanedNotes(context, args as Parameters<typeof findOrphanedNotes>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksOrphanedArgsSchema.parse(rawArgs) as LinksOrphanedArgs;
+      return findOrphanedNotes(context, args);
+    },
   },
   {
     name: "links.hubs",
     title: "Find Hub Notes",
-    description: "Find notes with many outgoing links.",
-    inputSchema: z.object({
-      minOutlinks: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
+    description:
+      "Return notes with at least `minOutlinks` outgoing links (default 10) — the vault's connective tissue / MOCs / indexes. Each result carries the path, title, outbound-link count, and inbound-link count. Read-only.",
+    inputSchema: linksHubsArgsSchema,
     outputSchema: listResultSchema,
     annotations: READ_ONLY,
-    handler: (context, args) => findHubNotes(context, args as Parameters<typeof findHubNotes>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksHubsArgsSchema.parse(rawArgs) as LinksHubsArgs;
+      return findHubNotes(context, args);
+    },
   },
   {
     name: "links.health",
     title: "Analyze Link Health",
-    description: "Summarize link density and broken-link metrics.",
-    inputSchema: z.object({ vaultPath: z.string().optional() }),
+    description:
+      "Summarise link health for the whole vault: total link count, broken-link count and ratio, orphan-note count, average outbound/inbound link density, and a list of the top hub notes. Read-only. Use this as a dashboard check; call `links.broken`/`links.orphaned`/`links.hubs` for the full per-item lists.",
+    inputSchema: linksHealthArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY,
-    handler: (context, args) =>
-      analyzeLinkHealth(context, args as Parameters<typeof analyzeLinkHealth>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksHealthArgsSchema.parse(rawArgs) as LinksHealthArgs;
+      return analyzeLinkHealth(context, args);
+    },
   },
   {
     name: "links.connections",
-    title: "Get Note Connections",
-    description: "Explore direct and multi-hop note connections.",
-    inputSchema: z.object({
-      noteName: z.string().min(1),
-      depth: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
+    title: "Explore Note Connections",
+    description:
+      "Explore the graph neighbourhood around a seed note — direct and multi-hop connections up to `depth` hops (default 2). Returns the set of reachable notes plus the paths that reach them. Higher `depth` values blow up result size quickly; keep it ≤3 unless you know the graph is sparse. Read-only.",
+    inputSchema: linksConnectionsArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY,
-    handler: (context, args) =>
-      getNoteConnections(context, args as Parameters<typeof getNoteConnections>[1]),
+    handler: async (context, rawArgs) => {
+      const args = linksConnectionsArgsSchema.parse(rawArgs) as LinksConnectionsArgs;
+      return getNoteConnections(context, args);
+    },
   },
 ];

@@ -1,25 +1,19 @@
 import { z } from "zod";
-import { getNoteStatistics, getVaultStatistics } from "../../domain/statistics.js";
-import { notePathSchema } from "../../schema/primitives.js";
+import { getVaultStatistics } from "../../domain/statistics.js";
 import type { ToolDefinition } from "../tool-definition.js";
 import { READ_ONLY, looseObjectSchema } from "../tool-schemas.js";
 
 export const analyticsTools: ToolDefinition[] = [
   {
-    name: "stats.note",
-    title: "Note Statistics",
-    description: "Get statistics for a single note.",
-    inputSchema: z.object({ filePath: notePathSchema, vaultPath: z.string().optional() }),
-    outputSchema: looseObjectSchema,
-    annotations: READ_ONLY,
-    handler: (context, args) =>
-      getNoteStatistics(context, args as Parameters<typeof getNoteStatistics>[1]),
-  },
-  {
     name: "stats.vault",
     title: "Vault Statistics",
-    description: "Get aggregate statistics for the whole vault.",
-    inputSchema: z.object({ vaultPath: z.string().optional() }),
+    description:
+      "Return aggregate statistics for the whole vault: total note count, total word count, total character count, total task count (open and completed), tag usage summary, and file size footprint. Read-only, scans every `.md` file. For per-note statistics use `notes.read` with `include: ['stats']`.",
+    inputSchema: z
+      .object({
+        vaultPath: z.string().optional(),
+      })
+      .strict(),
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY,
     handler: (context, args) =>

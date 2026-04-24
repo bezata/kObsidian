@@ -7,6 +7,20 @@ import { ok } from "../lib/results.js";
 import { registerWikiPrompts } from "./prompts.js";
 import { toolRegistry } from "./registry.js";
 import { registerWikiResources } from "./resources.js";
+import type { ToolDefinition } from "./tool-definition.js";
+
+function buildDescription(tool: ToolDefinition): string {
+  if (!tool.inputExamples || tool.inputExamples.length === 0) {
+    return tool.description;
+  }
+  const examples = tool.inputExamples
+    .map(
+      (ex, i) =>
+        `Example ${i + 1} — ${ex.description}:\n\`\`\`json\n${JSON.stringify(ex.input, null, 2)}\n\`\`\``,
+    )
+    .join("\n\n");
+  return `${tool.description}\n\nExamples:\n\n${examples}`;
+}
 
 function getSummary(result: unknown): string | undefined {
   if (
@@ -46,7 +60,7 @@ export function createServer(context: DomainContext = createDomainContext()) {
       tool.name,
       {
         title: tool.title,
-        description: tool.description,
+        description: buildDescription(tool),
         inputSchema: tool.inputSchema ?? z.object({}),
         outputSchema: tool.outputSchema,
         ...(tool.annotations ? { annotations: tool.annotations } : {}),

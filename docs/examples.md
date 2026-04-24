@@ -51,8 +51,8 @@ LLM: wiki.ingest {
          { path: "wiki/Entities/dong-et-al.md",           operation: "createStub" }
        ]
 
-     LLM walks the proposedEdits, applying each via
-       notes.create (for stubs) or notes.insertAfterHeading.
+     LLM walks the proposedEdits, applying each via notes.create
+       (for stubs) or notes.edit (mode: "after-heading").
      Reports: "Filed. 4 stubs created, 1 index entry added."
 ```
 

@@ -42,8 +42,8 @@ You curate the sources; the LLM does the bookkeeping.
 
 ## Why kObsidian
 
-- **Filesystem-first.** Operates on your vault directly. Obsidian doesn't need to be running for 80+ of the 90 tools.
-- **90 typed MCP tools** across notes, links, tags, tasks, Dataview, Canvas, Kanban, Mermaid, Marp, Templates — every one Zod-validated with `structuredContent` output and client-safety annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+- **Filesystem-first.** Operates on your vault directly. Obsidian doesn't need to be running for 55+ of the 62 tools.
+- **62 typed MCP tools** across notes, links, tags, tasks, Dataview, Canvas, Kanban, fenced blocks, Marp, Templates — every one Zod-validated with `structuredContent` output and the full 4-hint MCP annotation set (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
 - **LLM-Wiki orchestration** — a `wiki.*` namespace that turns your vault into a compounding knowledge base: ingest sources, auto-update an index + greppable log, lint for orphans / broken links / stale pages. Agent applies cross-refs via a `proposedEdits` contract so every write is visible in the transcript.
 - **Both transports.** Classic stdio for local MCP clients and Streamable HTTP (Hono) for remote, with CORS preflight, `MCP-Protocol-Version` handling, origin 403, and optional bearer auth — all per the 2025-11-25 spec.
 - **Ships everywhere.** npm (`npx -y kobsidian-mcp`), cross-platform `.mcpb` bundles for Claude Desktop drag-and-drop, a `smithery.yaml` for Smithery, and a `server.json` for the MCP Registry. Each `.mcpb` release asset is VirusTotal-scanned with links appended to the release body.
@@ -115,7 +115,7 @@ bun run dev:stdio    # or dev:http
 
 ## Obsidian plugins
 
-kObsidian is **filesystem-first** — 80+ of the 90 tools work against a
+kObsidian is **filesystem-first** — 55+ of the 62 tools work against a
 bare vault directory with no Obsidian plugins installed. The plugins
 below only matter if you want the specific tool namespaces that depend
 on them.
@@ -133,10 +133,10 @@ once per vault:
 ### Required for the REST-bridged tools
 
 **[Obsidian Local REST API](obsidian://show-plugin?id=obsidian-local-rest-api)** (by Adam Coddington) — needed for:
-- `workspace.*` (activeFile, openFile, navigateBack/Forward, toggleEditMode)
-- `commands.*` (execute, list, search)
-- `dataview.query` / `dataview.listByTag` / `dataview.listByFolder` / `dataview.table` (runtime DQL — the offline `dataview.fields.*` / `dataview.index.read` / `dataview.query.read` tools work without it)
-- `templates.renderTemplater` / `templates.createNoteTemplater` / `templates.insertTemplater`
+- `workspace.*` (activeFile, openFile, navigate, closeActiveFile, toggleEditMode)
+- `commands.*` (execute, list)
+- `dataview.query` / `dataview.listByTag` / `dataview.listByFolder` / `dataview.table` (runtime DQL — the offline `dataview.fields.*` / `dataview.index` / `blocks.*` tools work without it)
+- `templates.use` with `engine: "templater"`
 
 **Setup after install:**
 
@@ -151,7 +151,7 @@ Leave the plugin running while you use the REST-bridged tools — the endpoint i
 | Plugin | Link | What it unlocks |
 |---|---|---|
 | **[Dataview](obsidian://show-plugin?id=dataview)** | `id=dataview` | All `dataview.*` tools still work on the raw markdown; Dataview plugin is what makes DQL queries in `dataview.query*` actually execute. Also renders your fields + queries visually inside Obsidian. |
-| **[Templater](obsidian://show-plugin?id=templater-obsidian)** | `id=templater-obsidian` | Runtime template rendering via the REST API (`templates.renderTemplater`, etc.). The offline `templates.expand` / `templates.list` / `templates.createNote` work without it. |
+| **[Templater](obsidian://show-plugin?id=templater-obsidian)** | `id=templater-obsidian` | Runtime template rendering via the REST API (`templates.use` with `engine:"templater"`). The offline filesystem engine (`templates.use` with `engine:"filesystem"`) and `templates.list` work without it. |
 | **[Marp](obsidian://show-plugin?id=marp-slides)** | `id=marp-slides` | Marp `marp.*` tools parse + edit Marp-front-matter markdown even without the plugin; the plugin is what renders slides / exports to PDF inside Obsidian. |
 | **[Kanban](obsidian://show-plugin?id=obsidian-kanban)** | `id=obsidian-kanban` | `kanban.*` tools read/write the plain markdown board format regardless of plugin; the plugin is what renders the board as draggable columns inside Obsidian. |
 | **[Tasks](obsidian://show-plugin?id=obsidian-tasks-plugin)** | `id=obsidian-tasks-plugin` | `tasks.*` tools understand the Tasks-plugin emoji syntax (📅 ⏳ 🛫 ✅ 🔼 🔁) regardless of plugin; the plugin is what provides filtering / querying / toggling inside Obsidian. |
@@ -164,7 +164,7 @@ Leave the plugin running while you use the REST-bridged tools — the endpoint i
 
 | You want to … | Minimum you need |
 |---|---|
-| Use `notes.*` / `tags.*` / `links.*` / `stats.*` / `tasks.*` / `wiki.*` / `kanban.*` / `mermaid.*` / `marp.*` / `canvas.*` / `templates.expand` + `list` + `createNote` / offline `dataview.*` | **Just a vault path.** No plugins required. |
+| Use `notes.*` / `tags.*` / `links.*` / `stats.vault` / `tasks.*` / `wiki.*` / `kanban.*` / `blocks.*` / `marp.*` / `canvas.*` / `templates.list` + `templates.use` (`engine:"filesystem"`) / offline `dataview.*` | **Just a vault path.** No plugins required. |
 | Use `workspace.*` / `commands.*` | + **Local REST API** plugin + API key env var |
 | Run live DQL queries (`dataview.query` / `dataview.listBy*` / `dataview.table`) | + **Local REST API** + **Dataview** |
 | Run Templater templates at runtime | + **Local REST API** + **Templater** |
@@ -231,7 +231,7 @@ LLM:  wiki.ingest title="In-Context Learning — A Survey" sourceType=paper
           • createStub  wiki/Concepts/few-shot-prompting.md
           • createStub  wiki/Entities/brown-2020.md
           • insertAfterHeading  wiki/index.md#Sources
-      LLM applies each via notes.create / notes.insertAfterHeading.
+      LLM applies each via notes.create / notes.edit (mode: "after-heading").
 ```
 
 ### B. Architecture Decision Records (ADRs) for a codebase
@@ -348,7 +348,7 @@ LLM:  wiki.lint
           │      Domain layer (pure)         │
           │  notes · links · tags · tasks    │
           │  dataview · canvas · kanban      │
-          │  mermaid · marp · templates      │
+          │  blocks · marp · templates       │
           │  wiki/ orchestration             │
           └──────┬─────────────────┬─────────┘
                  │                 │
@@ -392,8 +392,8 @@ sources and asking questions.
                        │ creates 1 file                   ▼
                        │              ┌──────────────────────────────┐
                        ▼              │ LLM applies edits via        │
-              wiki/Sources/           │  notes.insertAfterHeading    │
-              <slug>.md               │  notes.update                │
+              wiki/Sources/           │  notes.edit (after-heading)  │
+              <slug>.md               │  notes.edit (replace)        │
                        │              │  notes.create                │
                        │ appends      └──────────────────────────────┘
                        ▼
@@ -436,23 +436,27 @@ symlink them into `~/.claude/skills/` — see
 
 ## Tool surface
 
-90 MCP tools across 12 namespaces. Always-current inventory at
-**[`docs/tool-inventory.json`](docs/tool-inventory.json)**.
+**62 MCP tools across 15 namespaces** (down from ~90 in v0.2.x — see
+[CHANGELOG](CHANGELOG.md) for the full migration table). Always-current
+inventory at **[`docs/tool-inventory.json`](docs/tool-inventory.json)**.
 
 | Namespace | Count | Highlights |
 |---|---:|---|
-| `notes.*` | 16 | CRUD · search · move · smart-insert (after heading / block) |
-| `tags.*` | 6 | Add · remove · search · analyze |
-| `links.*` | 8 | Backlinks · broken · orphans · hubs · graph · health |
-| `stats.*` | 2 | Per-note + vault-wide metrics |
-| `tasks.*` | 5 | Tasks-plugin format (📅 ⏳ 🛫 ✅ 🔼 🔁) |
-| `dataview.*` | 13 | Fields · DQL · DataviewJS (source-preserving edits) |
-| `mermaid.*` | 3 | Fenced-block parse / read / update |
-| `marp.*` | 5 | Slide-level reads + edits |
-| `kanban.*` | 5 | Board + card mutations |
-| `templates.*` + `canvas.*` | 10 | Templates · Templater bridge · Canvas nodes/edges |
-| `workspace.*` + `commands.*` | 9 | Obsidian REST bridge (only tools needing Obsidian running) |
-| `wiki.*` | **7** | init · ingest · log · indexRebuild · query · lint · summaryMerge |
+| `notes.*` | 8 | `read` (content/metadata/stats via `include`) · `create` (note or folder) · `edit` (replace/append/prepend/after-heading/after-block) · `frontmatter` · `delete` · `move` · `list` · `search` |
+| `tags.*` | 4 | `modify` (add/remove/replace/merge) · `search` · `analyze` · `list` |
+| `links.*` | 8 | Backlinks · outgoing · broken · orphans · hubs · graph · health · connections |
+| `stats.*` | 1 | `stats.vault` (per-note stats moved into `notes.read`) |
+| `tasks.*` | 5 | Tasks-plugin format (📅 ⏳ 🛫 ✅ 🔼 🔁) — search · create · toggle · updateMetadata · stats |
+| `dataview.*` | 7 | `query` + sugar wrappers (`listByTag`/`listByFolder`/`table`) · `index` · `fields.read` · `fields.write` |
+| `blocks.*` | 3 | Unified fenced-block API (`list`/`read`/`update`) across `dataview`, `dataviewjs`, `mermaid` |
+| `marp.*` | 2 | `read` (deck/slides/slide) · `update` (slide/frontmatter) |
+| `kanban.*` | 3 | `parse` · `stats` · `card` (add/move/toggle) |
+| `canvas.*` | 4 | `create` · `parse` · `connections` · `edit` (add-node/add-edge/remove-node) |
+| `templates.*` | 2 | `list` · `use` (engine × action) |
+| `workspace.*` | 5 | Live Obsidian UI bridge (requires Local REST API plugin) |
+| `commands.*` | 2 | `list` (with optional query) · `execute` |
+| `wiki.*` | 7 | init · ingest · log · indexRebuild · query · lint · summaryMerge |
+| `system.*` | 1 | `version` |
 
 **Client-safety annotations** (MCP 2025-11-25):
 

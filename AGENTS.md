@@ -50,8 +50,8 @@ of the low-level primitives. The schema is documented inside each vault as
 - **`wiki.ingest`** — file a source: creates `wiki/Sources/<slug>.md` with
   canonical frontmatter and an append-only log entry. Returns a
   `proposedEdits` array (index line, concept-stub creations, entity-citation
-  inserts) for the caller to apply via `notes.update` — never applies
-  cross-reference edits directly.
+  inserts) for the caller to apply via `notes.create` / `notes.edit` — never
+  applies cross-reference edits directly.
 - **`wiki.logAppend`** — typed log entry, format
   `## [YYYY-MM-DD] <op> | <title>` so `grep '^## \[' log.md | tail -5` just
   works.

@@ -40,7 +40,7 @@ export const wikiTools: ToolDefinition[] = [
     name: "wiki.ingest",
     title: "Ingest Source",
     description:
-      "File a new source into the wiki: create Sources/<slug>.md with canonical frontmatter, append a log entry, and return proposedEdits for index + related concept/entity pages for the LLM to apply via notes.update.",
+      "File a new source into the wiki: create Sources/<slug>.md with canonical frontmatter, append a log entry, and return proposedEdits for index + related concept/entity pages for the LLM to apply via notes.create (for new stubs) or notes.edit (mode: 'after-heading' / 'append' for inserts into existing pages).",
     inputSchema: wikiIngestArgsSchema,
     outputSchema: mutationResultSchema,
     handler: (context, args) => ingestSource(context, args as Parameters<typeof ingestSource>[1]),

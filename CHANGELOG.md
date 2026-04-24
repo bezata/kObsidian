@@ -7,6 +7,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] — 2026-04-25
+
+> **Tool-surface consolidation.** The tool surface has been reduced from ~90
+> tools across 16 namespaces to **62 tools across 15 namespaces** (a 31%
+> reduction). This is shipped as a minor bump; callers relying on the removed
+> tool names listed below will need to migrate.
+> Every remaining tool description has been rewritten to match Anthropic's
+> tool-use guidance — outcome-focused prose, inline enum docs, explicit safety
+> hints — and every tool now declares the full MCP 4-hint annotation set
+> (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+> `input_examples` are attached to complex tools and rendered into the tool
+> description at registration time so Anthropic clients, Glama, and LLMs all
+> see them. The goal: lift Glama's automated tool ratings out of C-grade and
+> give LLMs a cleaner mental model of the vault.
+
+### Breaking — namespace changes
+
+- **`mermaid.*` removed.** Mermaid blocks are now handled by the new
+  `blocks.*` namespace. Same domain behaviour, different tool names.
+- **`stats.note` removed.** Use `notes.read` with `include: ['stats']`.
+
+### Breaking — tool renames & merges
+
+| Removed | Replacement | Notes |
+| --- | --- | --- |
+| `notes.info` | `notes.read` with `include: ['metadata']` | Single read tool with `include` array |
+| `stats.note` | `notes.read` with `include: ['stats']` | |
+| `notes.update`, `notes.append`, `notes.insertAfterHeading`, `notes.insertAfterBlock` | `notes.edit` with `mode` discriminated union | Modes: `replace`, `append`, `prepend`, `after-heading`, `after-block`. `prepend` is new. |
+| `notes.createFolder` | `notes.create` with `kind: 'folder'` | |
+| `notes.moveFolder` | `notes.move` with `kind: 'folder'` | `from`/`to` replace `sourcePath`/`destinationPath`. |
+| `notes.listFolders`, `notes.searchByDate` | `notes.list` with `include` and `since`/`until`/`dateField` | |
+| `notes.updateFrontmatter` | `notes.frontmatter` | Now supports `set`, `unset`, and `strategy: 'merge' \| 'replace'`. |
+| `tags.add`, `tags.remove`, `tags.update` | `tags.modify` with `op: 'add' \| 'remove' \| 'replace' \| 'merge'` | |
+| `kanban.addCard`, `kanban.moveCard`, `kanban.toggleCard` | `kanban.card` with `op: 'add' \| 'move' \| 'toggle'` | Zod discriminated union. |
+| `canvas.addNode`, `canvas.addEdge`, `canvas.removeNode` | `canvas.edit` with `op: 'add-node' \| 'add-edge' \| 'remove-node'` | |
+| `marp.deck.read`, `marp.slides.list`, `marp.slides.read` | `marp.read` with `part: 'deck' \| 'slides' \| 'slide'` | |
+| `marp.slides.update`, `marp.frontmatter.update` | `marp.update` with `part: 'slide' \| 'frontmatter'` | |
+| `templates.expand`, `templates.createNote`, `templates.renderTemplater`, `templates.createNoteTemplater`, `templates.insertTemplater` | `templates.use` with `engine × action` discriminated union | `engine: 'filesystem' \| 'templater'`; actions: `render`, `create-note`, `insert-active` (templater only). |
+| `dataview.query.read`, `dataview.query.update`, `dataview.js.read`, `dataview.js.update`, `mermaid.blocks.list`, `mermaid.blocks.read`, `mermaid.blocks.update` | `blocks.list`, `blocks.read`, `blocks.update` with `language: 'dataview' \| 'dataviewjs' \| 'mermaid'` | Unified fenced-block API. |
+| `dataview.fields.extract`, `dataview.fields.search` | `dataview.fields.read` with `op: 'extract' \| 'search'` | |
+| `dataview.fields.add`, `dataview.fields.remove` | `dataview.fields.write` with `op: 'add' \| 'remove'` | |
+| `dataview.index.read` | `dataview.index` | Shortened. |
+| `workspace.navigateBack`, `workspace.navigateForward` | `workspace.navigate` with `direction: 'back' \| 'forward'` | |
+| `commands.search`, `commands.list` | `commands.list` with optional `query` | Omit `query` for full list; supply substring to search. |
+
+### Changed
+
+- **Every tool description is now a 3–5 sentence paragraph** covering the
+  action, when-to-use, constraints, return shape, and safety/limitations —
+  per Anthropic's ["Providing extremely detailed descriptions is the most
+  critical factor for tool performance"](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools).
+- **Annotation constants expanded** to always set all four MCP 2025-11-25
+  hints explicitly, preventing default-leak issues (`readOnlyHint=false`,
+  `destructiveHint=true`, `idempotentHint=false`, `openWorldHint=true` are
+  the defaults — nearly always wrong for us). New named constants:
+  `ADDITIVE`, `ADDITIVE_OPEN_WORLD`, `IDEMPOTENT_ADDITIVE`, `DESTRUCTIVE`.
+  Legacy names (`IDEMPOTENT`, `READ_ONLY_IDEMPOTENT`, `OPEN_WORLD`) kept as
+  aliases during migration.
+- **Per-namespace Zod schemas** live in `src/schema/<namespace>.ts` —
+  every field carries `.describe()`, every argument object uses `.strict()`
+  (emits JSON Schema `additionalProperties: false`).
+- **`input_examples`** are now a first-class `ToolDefinition` field,
+  rendered into the registered tool description. Attached on complex tools:
+  `notes.create`, `notes.edit`, `notes.frontmatter`, `tags.modify`,
+  `kanban.card`, `canvas.edit`, `marp.update`, `templates.use`,
+  `dataview.fields.write`, `blocks.update`, `tasks.create`.
+
+### Migration examples
+
+```diff
+- notes.append { filePath: "foo.md", content: "..." }
++ notes.edit   { mode: "append", path: "foo.md", content: "..." }
+
+- tags.add { path: "foo.md", tags: ["x"] }
++ tags.modify { path: "foo.md", op: "add", tags: ["x"] }
+
+- mermaid.blocks.update { filePath, source, index }
++ blocks.update { filePath, source, index, language: "mermaid" }
+
+- dataview.query.update { filePath, source, blockId }
++ blocks.update { filePath, source, blockId, language: "dataview" }
+
+- templates.createNote { templatePath, targetPath, variables }
++ templates.use {
++   engine: "filesystem", action: "create-note",
++   templatePath, targetPath, variables
++ }
+```
+
 ## [0.2.1] — 2026-04-23
 
 ### Fixed

@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   createTask,
   getTaskStatistics,
@@ -7,105 +6,110 @@ import {
   updateTaskMetadata,
 } from "../../domain/tasks.js";
 import {
-  notePathSchema,
-  optionalDateStringSchema,
-  positiveIntSchema,
-  tagSchema,
-} from "../../schema/primitives.js";
+  type TasksCreateArgs,
+  type TasksSearchArgs,
+  type TasksStatsArgs,
+  type TasksToggleArgs,
+  type TasksUpdateMetadataArgs,
+  tasksCreateArgsSchema,
+  tasksSearchArgsSchema,
+  tasksStatsArgsSchema,
+  tasksToggleArgsSchema,
+  tasksUpdateMetadataArgsSchema,
+} from "../../schema/tasks.js";
 import type { ToolDefinition } from "../tool-definition.js";
 import {
-  IDEMPOTENT,
+  ADDITIVE,
+  IDEMPOTENT_ADDITIVE,
   READ_ONLY,
   listResultSchema,
   looseObjectSchema,
   mutationResultSchema,
 } from "../tool-schemas.js";
 
-const prioritySchema = z.enum(["highest", "high", "normal", "low", "lowest"]);
-const statusSchema = z.enum(["incomplete", "completed", "all"]);
-
 export const taskTools: ToolDefinition[] = [
   {
     name: "tasks.search",
     title: "Search Tasks",
-    description: "Search Tasks-plugin style markdown tasks across the vault.",
-    inputSchema: z.object({
-      status: statusSchema.optional(),
-      priority: prioritySchema.optional(),
-      dueBefore: optionalDateStringSchema,
-      dueAfter: optionalDateStringSchema,
-      dueWithinDays: positiveIntSchema.optional(),
-      hasRecurrence: z.boolean().optional(),
-      tag: tagSchema.optional(),
-      sortBy: z.enum(["dueDate", "priority", "file", "lineNumber"]).optional(),
-      limit: positiveIntSchema.optional(),
-      vaultPath: z.string().optional(),
-    }),
+    description:
+      "Scan the vault for Tasks-plugin-style markdown task lines (`- [ ]` / `- [x]`) and filter by status, priority, due date range, recurrence, or tag. Result items include the task text, source file, line number, status, and parsed metadata — enough to locate and further manipulate each task via `tasks.toggle` or `tasks.updateMetadata`. `sortBy` controls ordering; `limit` caps the result count. Read-only. For vault-wide counts without per-task detail, use `tasks.stats`.",
+    inputSchema: tasksSearchArgsSchema,
     outputSchema: listResultSchema,
     annotations: READ_ONLY,
-    handler: (context, args) => searchTasks(context, args as Parameters<typeof searchTasks>[1]),
+    handler: async (context, rawArgs) => {
+      const args = tasksSearchArgsSchema.parse(rawArgs) as TasksSearchArgs;
+      return searchTasks(context, args);
+    },
   },
   {
     name: "tasks.create",
     title: "Create Task",
-    description: "Append a task line to a note.",
-    inputSchema: z.object({
-      filePath: notePathSchema,
-      content: z.string().min(1),
-      status: z.enum(["incomplete", "completed"]).optional(),
-      priority: prioritySchema.optional(),
-      dueDate: optionalDateStringSchema,
-      scheduledDate: optionalDateStringSchema,
-      startDate: optionalDateStringSchema,
-      doneDate: optionalDateStringSchema,
-      createdDate: optionalDateStringSchema,
-      recurrence: z.string().optional(),
-      vaultPath: z.string().optional(),
-    }),
+    description:
+      "Append a new task line to a note. The task is written in Tasks-plugin format: `- [ ] <content> {metadata emojis}`. Optional metadata (`priority`, `dueDate`, `scheduledDate`, `startDate`, `doneDate`, `createdDate`, `recurrence`) is encoded as the plugin's convention emojis (🔺⏫📅⏳🛫✅➕🔁). Returns the standard mutation envelope with the 1-based `lineNumber` where the task was inserted.",
+    inputSchema: tasksCreateArgsSchema,
     outputSchema: mutationResultSchema,
-    handler: (context, args) => createTask(context, args as Parameters<typeof createTask>[1]),
+    annotations: ADDITIVE,
+    handler: async (context, rawArgs) => {
+      const args = tasksCreateArgsSchema.parse(rawArgs) as TasksCreateArgs;
+      return createTask(context, args);
+    },
+    inputExamples: [
+      {
+        description: "Append a simple task with a due date",
+        input: {
+          filePath: "Tasks.md",
+          content: "Write the v0.3.0 migration doc",
+          dueDate: "2026-05-01",
+        },
+      },
+      {
+        description: "Append a high-priority weekly recurring task",
+        input: {
+          filePath: "Tasks.md",
+          content: "Weekly review",
+          priority: "high",
+          recurrence: "every week on Sunday",
+        },
+      },
+    ],
   },
   {
     name: "tasks.toggle",
-    title: "Toggle Task",
-    description: "Toggle a task complete/incomplete by file and line number.",
-    inputSchema: z.object({
-      sourceFile: notePathSchema,
-      lineNumber: positiveIntSchema,
-      doneDate: optionalDateStringSchema,
-      vaultPath: z.string().optional(),
-    }),
+    title: "Toggle Task Status",
+    description:
+      "Flip a task line between `[ ]` and `[x]` in place, identified by `sourceFile` and 1-based `lineNumber`. When marking a task done, a `✅ YYYY-MM-DD` date is stamped into the line (default today; override with `doneDate`). Fails if the target line is not a task checkbox. Use `tasks.search` to find the right `sourceFile`/`lineNumber` pair.",
+    inputSchema: tasksToggleArgsSchema,
     outputSchema: mutationResultSchema,
-    handler: (context, args) =>
-      toggleTaskStatus(context, args as Parameters<typeof toggleTaskStatus>[1]),
+    annotations: ADDITIVE,
+    handler: async (context, rawArgs) => {
+      const args = tasksToggleArgsSchema.parse(rawArgs) as TasksToggleArgs;
+      return toggleTaskStatus(context, args);
+    },
   },
   {
     name: "tasks.updateMetadata",
     title: "Update Task Metadata",
-    description: "Update task dates, priority, or recurrence in place.",
-    inputSchema: z.object({
-      sourceFile: notePathSchema,
-      lineNumber: positiveIntSchema,
-      priority: prioritySchema.optional(),
-      dueDate: optionalDateStringSchema,
-      scheduledDate: optionalDateStringSchema,
-      startDate: optionalDateStringSchema,
-      recurrence: z.string().optional(),
-      vaultPath: z.string().optional(),
-    }),
+    description:
+      "Update a task's dates, priority, or recurrence expression in place without touching the task body text. Identified by `sourceFile` + 1-based `lineNumber`. Pass only the fields you want to change. Idempotent — re-running with identical inputs converges on the same line. Fails if the target line is not a task.",
+    inputSchema: tasksUpdateMetadataArgsSchema,
     outputSchema: mutationResultSchema,
-    annotations: IDEMPOTENT,
-    handler: (context, args) =>
-      updateTaskMetadata(context, args as Parameters<typeof updateTaskMetadata>[1]),
+    annotations: IDEMPOTENT_ADDITIVE,
+    handler: async (context, rawArgs) => {
+      const args = tasksUpdateMetadataArgsSchema.parse(rawArgs) as TasksUpdateMetadataArgs;
+      return updateTaskMetadata(context, args);
+    },
   },
   {
     name: "tasks.stats",
     title: "Task Statistics",
-    description: "Get aggregate task statistics for the vault.",
-    inputSchema: z.object({ vaultPath: z.string().optional() }),
+    description:
+      "Return aggregate task statistics for the whole vault: total tasks, incomplete count, completed count, overdue count (due date passed and still incomplete), upcoming counts by horizon (today/this-week/next-week), and per-priority breakdown. Read-only. Use `tasks.search` to get the individual task records.",
+    inputSchema: tasksStatsArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: READ_ONLY,
-    handler: (context, args) =>
-      getTaskStatistics(context, args as Parameters<typeof getTaskStatistics>[1]),
+    handler: async (context, rawArgs) => {
+      const args = tasksStatsArgsSchema.parse(rawArgs) as TasksStatsArgs;
+      return getTaskStatistics(context, args);
+    },
   },
 ];
