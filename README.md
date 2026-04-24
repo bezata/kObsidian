@@ -10,6 +10,7 @@ You curate the sources; the LLM does the bookkeeping.
 <br />
 
 [![npm version](https://img.shields.io/npm/v/kobsidian-mcp?color=cb3837&label=npm&logo=npm)](https://www.npmjs.com/package/kobsidian-mcp)
+[![npm downloads](https://img.shields.io/npm/dt/kobsidian-mcp?color=cb3837&label=downloads&logo=npm)](https://www.npmjs.com/package/kobsidian-mcp)
 [![GitHub release](https://img.shields.io/github/v/release/bezata/kObsidian?color=1e88e5&label=release&logo=github&sort=semver)](https://github.com/bezata/kObsidian/releases/latest)
 [![license](https://img.shields.io/npm/l/kobsidian-mcp?color=blue)](LICENSE)
 [![Release CI](https://img.shields.io/github/actions/workflow/status/bezata/kObsidian/release.yml?branch=main&label=CI&logo=github)](https://github.com/bezata/kObsidian/actions/workflows/release.yml)
