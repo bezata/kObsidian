@@ -21,7 +21,7 @@ You curate the sources; the LLM does the bookkeeping.
 [![Tools](https://img.shields.io/badge/MCP_tools-90-1e88e5)](docs/tools.md)
 [![Resources](https://img.shields.io/badge/MCP_resources-4-1e88e5)](docs/tools.md#resources)
 [![Prompts](https://img.shields.io/badge/MCP_prompts-3-1e88e5)](docs/tools.md#prompts)
-
+[![kObsidian MCP server](https://glama.ai/mcp/servers/bezata/kObsidian/badges/card.svg)](https://glama.ai/mcp/servers/bezata/kObsidian)
 [![Smithery](https://img.shields.io/badge/Smithery-listed-8b5cf6)](https://smithery.ai)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-10b981)](https://registry.modelcontextprotocol.io)
 [![VirusTotal](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbezata%2FkObsidian%2Fmain%2F.github%2Fbadges%2Fvirustotal.json)](https://github.com/bezata/kObsidian/releases/latest)
