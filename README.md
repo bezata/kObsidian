@@ -73,7 +73,7 @@ filesystem-first tools keep working.
 |---|---|
 | `OBSIDIAN_VAULT_PATH` | **Required everywhere.** Absolute path to the vault. |
 | `OBSIDIAN_API_URL` | Base URL of the Local REST API plugin. Default `https://127.0.0.1:27124`. |
-| `OBSIDIAN_API_VERIFY_TLS` | `false` unless you've trusted the REST API's self-signed cert. |
+| `OBSIDIAN_API_VERIFY_TLS` | _Optional._ Defaults to `false` (the REST API plugin uses a self-signed cert on `127.0.0.1`). Set `true` only after trusting the cert in your OS keychain. |
 | `OBSIDIAN_REST_API_KEY` | Local REST API plugin bearer key — only for `workspace.*` / `commands.*` / live `dataview.query*`. |
 
 Full list in [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md). Swap `npx`
@@ -86,7 +86,6 @@ for `bunx` anywhere if you want ≈10 ms cold-start instead of ≈200 ms.
 claude mcp add kobsidian -s user \
   --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
   --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
-  --env OBSIDIAN_API_VERIFY_TLS=false \
   --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools \
   -- npx -y kobsidian-mcp
 ```
@@ -122,7 +121,6 @@ bun run bundle:mcpb     # → kobsidian.mcpb
 codex mcp add kobsidian \
   --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
   --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
-  --env OBSIDIAN_API_VERIFY_TLS=false \
   --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools \
   -- npx -y kobsidian-mcp
 ```
@@ -144,7 +142,6 @@ Edit `~/.cursor/mcp.json` (or the per-project `.cursor/mcp.json`):
       "env": {
         "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
         "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
-        "OBSIDIAN_API_VERIFY_TLS": "false",
         "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
       }
     }
@@ -161,7 +158,7 @@ Or hand a one-click deeplink to your users:
 <summary><b>VS Code</b> (Copilot) — <code>code --add-mcp</code></summary>
 
 ```bash
-code --add-mcp '{"name":"kobsidian","command":"npx","args":["-y","kobsidian-mcp"],"env":{"OBSIDIAN_VAULT_PATH":"/absolute/path/to/vault","OBSIDIAN_API_URL":"https://127.0.0.1:27124","OBSIDIAN_API_VERIFY_TLS":"false","OBSIDIAN_REST_API_KEY":"only-if-you-use-workspace-or-commands-tools"}}'
+code --add-mcp '{"name":"kobsidian","command":"npx","args":["-y","kobsidian-mcp"],"env":{"OBSIDIAN_VAULT_PATH":"/absolute/path/to/vault","OBSIDIAN_API_URL":"https://127.0.0.1:27124","OBSIDIAN_REST_API_KEY":"only-if-you-use-workspace-or-commands-tools"}}'
 ```
 
 Or create `.vscode/mcp.json` in your workspace with the same shape under
@@ -176,7 +173,6 @@ a top-level `servers` key.
 gemini mcp add kobsidian \
   --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
   --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
-  --env OBSIDIAN_API_VERIFY_TLS=false \
   --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools \
   -- npx -y kobsidian-mcp
 ```
@@ -201,7 +197,6 @@ Edit `~/.gemini/antigravity/mcp_config.json`
       "env": {
         "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
         "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
-        "OBSIDIAN_API_VERIFY_TLS": "false",
         "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
       }
     }
@@ -226,7 +221,6 @@ In `~/.config/zed/settings.json`:
       "env": {
         "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
         "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
-        "OBSIDIAN_API_VERIFY_TLS": "false",
         "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
       }
     }
@@ -248,7 +242,6 @@ In `~/.config/zed/settings.json`:
       "environment": {
         "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
         "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
-        "OBSIDIAN_API_VERIFY_TLS": "false",
         "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
       }
     }
@@ -265,7 +258,6 @@ In `~/.config/zed/settings.json`:
 droid mcp add kobsidian "npx -y kobsidian-mcp" \
   --env OBSIDIAN_VAULT_PATH=/absolute/path/to/vault \
   --env OBSIDIAN_API_URL=https://127.0.0.1:27124 \
-  --env OBSIDIAN_API_VERIFY_TLS=false \
   --env OBSIDIAN_REST_API_KEY=only-if-you-use-workspace-or-commands-tools
 ```
 
@@ -286,7 +278,6 @@ Any MCP client that reads a standard `mcpServers` object will accept:
       "env": {
         "OBSIDIAN_VAULT_PATH": "/absolute/path/to/vault",
         "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
-        "OBSIDIAN_API_VERIFY_TLS": "false",
         "OBSIDIAN_REST_API_KEY": "only-if-you-use-workspace-or-commands-tools"
       }
     }
