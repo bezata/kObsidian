@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-04-25
+
+> **Tool Definition Quality Score (TDQS) sweep.** Description-only
+> release. Eleven tool descriptions were rewritten to cover the six
+> TDQS dimensions (Purpose Clarity, Usage Guidelines, Behavioral
+> Transparency, Parameter Semantics, Conciseness, Contextual
+> Completeness), the wiki Zod schemas grew per-parameter `.describe()`
+> calls (~30 additions), and `inputExamples` were added to every
+> `wiki.*` and `workspace.*` tool that lacked them. No behavior change,
+> no schema or annotation change — `docs/tool-inventory.json` diff is
+> description-only.
+
+### Changed
+
+- **`wiki.*` (7 tools)** — `wiki.init`, `wiki.ingest`, `wiki.logAppend`,
+  `wiki.indexRebuild`, `wiki.query`, `wiki.lint`, `wiki.summaryMerge`
+  descriptions now spell out parameter semantics inline, name sibling
+  tools to disambiguate (e.g. `wiki.summaryMerge` vs `wiki.ingest`),
+  document return shape, and carry 1–2 `inputExamples` each.
+- **`workspace.openFile` / `workspace.closeActiveFile` /
+  `workspace.toggleEditMode`** — descriptions document return shape,
+  edge cases (no active file → no-op), the UI-only contract, and now
+  carry `inputExamples`.
+- **`links.hubs`** — description tightened with WHEN-vs-siblings
+  guidance against `links.health` and `links.graph`.
+- **Wiki Zod schemas** (`src/schema/wiki.ts`) — every parameter on
+  `wikiInitArgsSchema`, `wikiIngestArgsSchema`, `wikiLogAppendArgsSchema`,
+  `wikiIndexRebuildArgsSchema`, `wikiQueryArgsSchema`,
+  `wikiLintArgsSchema`, and `wikiSummaryMergeArgsSchema` now carries a
+  `.describe()` call so MCP clients see per-parameter help text.
+
 ## [0.3.0] — 2026-04-25
 
 > **Multi-vault support.** kObsidian can now discover and switch between
