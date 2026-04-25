@@ -37,28 +37,48 @@ export const apiTools: ToolDefinition[] = [
     name: "workspace.openFile",
     title: "Open File In Obsidian",
     description:
-      "Open a vault-relative note path in the live Obsidian UI. `newPane:true` opens in a split; otherwise the current pane is reused. Requires the Local REST API plugin. This tool mutates the UI but does not touch file contents.",
+      "Open a vault-relative note `filePath` in the live Obsidian UI. `newPane:true` opens it in a new split; default reuses the active pane. UI-only — does not create, modify, or read file contents (use `notes.read` for content). Returns `{ ok: true }` on success; errors when the file does not exist or the Local REST API plugin (OBSIDIAN_API_URL / OBSIDIAN_REST_API_KEY) is unreachable. The opened file targets the live Obsidian process's vault, which may differ from the filesystem session vault — see `vault.current`.",
     inputSchema: z
       .object({
-        filePath: notePathSchema.describe("Vault-relative path of the note to open."),
+        filePath: notePathSchema.describe(
+          "Vault-relative path of the note to open (e.g. `Daily/2026-04-25.md`).",
+        ),
         newPane: z
           .boolean()
           .optional()
-          .describe("Open in a new split pane instead of the current one. Defaults to false."),
+          .describe(
+            "Open in a new split pane instead of reusing the active one. Defaults to false.",
+          ),
       })
       .strict(),
     outputSchema: looseObjectSchema,
     annotations: ADDITIVE_OPEN_WORLD,
+    inputExamples: [
+      {
+        description: "Reveal a daily note in the current pane.",
+        input: { filePath: "Daily/2026-04-25.md" },
+      },
+      {
+        description: "Open a reference note in a side split.",
+        input: { filePath: "wiki/Concepts/grpc.md", newPane: true },
+      },
+    ],
     handler: (context, args) => openFile(context, args as Parameters<typeof openFile>[1]),
   },
   {
     name: "workspace.closeActiveFile",
     title: "Close Active File",
     description:
-      "Close the currently active file in Obsidian. Does not affect file contents — only the UI. Requires the Local REST API plugin.",
+      "Close whatever file is currently active in the Obsidian UI. UI-only — does not delete, save, or modify file contents. No-op when no file is active. Returns `{ ok: true }` on success; errors when the Local REST API plugin is unreachable. Use after `workspace.openFile` when you want to dismiss a temporarily-revealed note. Pair with `workspace.activeFile` first if you need to know what was closed.",
     inputSchema: emptyArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: ADDITIVE_OPEN_WORLD,
+    inputExamples: [
+      {
+        description: "Dismiss the currently active pane.",
+        input: {},
+      },
+    ],
     handler: (context) => closeActiveFile(context),
   },
   {
@@ -84,10 +104,16 @@ export const apiTools: ToolDefinition[] = [
     name: "workspace.toggleEditMode",
     title: "Toggle Edit Mode",
     description:
-      "Toggle the active file between edit (source) and preview (reading) mode in Obsidian. Requires the Local REST API plugin.",
+      "Flip the active file in Obsidian between edit (source) mode and preview (reading) mode. Takes no arguments — always toggles whichever mode is currently active. UI-only: does not modify file contents. No-op when no file is active. Returns `{ ok: true, mode: 'edit' | 'preview' }` reflecting the new mode; errors when the Local REST API plugin is unreachable. Useful when an agent has finished a multi-step edit and wants the user to see the rendered result.",
     inputSchema: emptyArgsSchema,
     outputSchema: looseObjectSchema,
     annotations: ADDITIVE_OPEN_WORLD,
+    inputExamples: [
+      {
+        description: "Flip the active note from edit to preview (or vice versa).",
+        input: {},
+      },
+    ],
     handler: (context) => toggleEditMode(context),
   },
   {

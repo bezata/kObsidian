@@ -1,6 +1,6 @@
 {
   "name": "kobsidian-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "TypeScript MCP server for Obsidian with a filesystem-first LLM Wiki layer, Dataview / Canvas / Kanban / Mermaid / Marp / Templates tools, and both stdio and Streamable HTTP transports.",
   "type": "module",
   "mcpName": "io.github.bezata/kobsidian-mcp",

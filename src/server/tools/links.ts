@@ -99,7 +99,7 @@ export const linkTools: ToolDefinition[] = [
     name: "links.hubs",
     title: "Find Hub Notes",
     description:
-      "Return notes with at least `minOutlinks` outgoing links (default 10) — the vault's connective tissue / MOCs / indexes. Each result carries the path, title, outbound-link count, and inbound-link count. Read-only.",
+      "Return notes with at least `minOutlinks` outgoing links (default 10), sorted by outbound count descending — the vault's connective tissue / MOCs / curated indexes. Each result carries `{path, title, outbound, inbound}`. Read-only. Use this to find pages that already act as navigational anchors (good seeds for `links.connections`); use `links.health` for a single rolled-up score across the whole vault, and `links.graph` when you need the full raw edge list rather than just the dense nodes.",
     inputSchema: linksHubsArgsSchema,
     outputSchema: listResultSchema,
     annotations: READ_ONLY,
