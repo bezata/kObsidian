@@ -722,6 +722,26 @@ Every wiki tool also accepts a per-call `wikiRoot` override.
 
 ---
 
+## Roadmap
+
+The next two milestones are tracked in [`TODO.md`](TODO.md):
+
+- **v0.4 — Obsidian LiveSync bridge.** Free, end-to-end-encrypted
+  vault access via the community
+  [Self-Hosted LiveSync](https://github.com/vrtmrz/obsidian-livesync)
+  plugin (CouchDB / S3 / R2 / WebRTC peer) — so an MCP client can
+  reach the same Obsidian vault from any machine the user owns,
+  without Obsidian itself being live.
+- **v0.5 — Cross-semantic vault verification.** A `wiki.crossCheck`
+  tool that reconciles two or more LiveSync-paired vaults at the
+  wiki layer, gated by a new `schema_version` frontmatter field that
+  uses the project's semver discipline as the compatibility contract.
+
+`TODO.md` carries the motivation, the per-milestone task breakdown,
+and the rules for how items move from there into the CHANGELOG.
+
+---
+
 ## Development
 
 ```bash
