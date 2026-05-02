@@ -2,6 +2,12 @@
 
 Deeper reading, grouped by what you want to do.
 
+## Translations
+
+- **简体中文:** [i18n/zh-CN/README.md](i18n/zh-CN/README.md)
+- **日本語:** [i18n/ja/README.md](i18n/ja/README.md)
+- **한국어:** [i18n/ko/README.md](i18n/ko/README.md)
+
 ## Workspaces (multi-vault)
 
 - **[WORKSPACES.md](WORKSPACES.md)** — the only Obsidian MCP with in-session
