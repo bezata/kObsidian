@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "label": "VirusTotal",
-  "message": "clean · 5/5 bundles · v0.3.0",
+  "message": "clean · 5/5 bundles · v0.3.2",
   "color": "brightgreen",
   "namedLogo": "virustotal",
   "logoColor": "white",
