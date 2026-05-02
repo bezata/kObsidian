@@ -34,6 +34,8 @@ You curate the sources; the LLM does the bookkeeping.
 [**Tools**](#tool-surface) ·
 [**Docs**](docs/README.md)
 
+Docs: [简体中文](docs/i18n/zh-CN/README.md) / [日本語](docs/i18n/ja/README.md) / [한국어](docs/i18n/ko/README.md)
+
 [![kObsidian MCP server](https://glama.ai/mcp/servers/bezata/kObsidian/badges/card.svg)](https://glama.ai/mcp/servers/bezata/kObsidian)
 
 </div>
@@ -708,6 +710,10 @@ Every wiki tool also accepts a per-call `wikiRoot` override.
 ---
 
 ## Docs
+
+Localized docs are available in **[简体中文](docs/i18n/zh-CN/README.md)**,
+**[日本語](docs/i18n/ja/README.md)**, and
+**[한국어](docs/i18n/ko/README.md)**.
 
 | | |
 |---|---|

@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-05-02
+
+> **Localized documentation release.** Adds Simplified Chinese,
+> Japanese, and Korean documentation sets under `docs/i18n/`, and links
+> them from the project README and docs index. No runtime behavior,
+> schema, or tool-surface changes.
+
+### Added
+
+- **Localized docs:** `docs/i18n/zh-CN/`, `docs/i18n/ja/`, and
+  `docs/i18n/ko/` now include translated project README, roadmap,
+  changelog, architecture, wiki, examples, tools, security, testing,
+  environment, migration, and workspaces docs.
+- **Locale index:** `docs/i18n/README.md` lists the available localized
+  documentation entry points.
+
+### Changed
+
+- Root `README.md` and `docs/README.md` now link directly to the
+  Chinese, Japanese, and Korean documentation.
+- Release-facing version metadata in `package.json`, `manifest.json`,
+  and `server.json` is aligned at `0.3.2`.
+
 ## [0.3.1] — 2026-04-25
 
 > **Tool Definition Quality Score (TDQS) sweep.** Description-only

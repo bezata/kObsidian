@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "kobsidian",
   "display_name": "kObsidian",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "Filesystem-first MCP server for Obsidian vaults with an LLM-Wiki layer.",
   "long_description": "kObsidian exposes 66 MCP tools across notes, links, tags, tasks, Dataview, Canvas, Kanban, Marp, Templates, blocks, vaults, and an LLM-Wiki orchestration namespace (wiki.init, wiki.ingest, wiki.query, wiki.lint, etc.). v0.3.0 adds multi-vault support: vault.list discovers the user's Obsidian vaults, vault.select switches between them per session, and every existing tool remains fully backwards compatible with OBSIDIAN_VAULT_PATH. Every tool description is written for high LLM/Glama compatibility with explicit MCP annotation hints and input examples. It operates directly on the vault filesystem and optionally bridges to the Obsidian Local REST API plugin for workspace/command actions.",
   "author": {
