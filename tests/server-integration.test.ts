@@ -1,3 +1,5 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -41,6 +43,78 @@ describe("server integration", () => {
       arguments: { path: "note1.md" },
     });
     expect(result.structuredContent).toMatchObject({ path: "note1.md" });
+
+    await client.close();
+    await server.close();
+  });
+
+  it("returns schema-compatible numeric note stats over MCP", async () => {
+    const vault = await makeTempVault();
+    const context = createDomainContext(
+      getEnv({
+        ...process.env,
+        OBSIDIAN_VAULT_PATH: vault,
+        KOBSIDIAN_ALLOWED_ORIGINS: "http://localhost",
+      }),
+    );
+    const server = createServer(context);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    const client = new Client({ name: "stats-client", version: "1.0.0" }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const result = await client.callTool({
+      name: "notes.read",
+      arguments: { path: "note1.md", include: ["stats"] },
+    });
+
+    expect(result.structuredContent).toMatchObject({
+      path: "note1.md",
+      stats: {
+        headings: expect.any(Number),
+        links: expect.any(Number),
+      },
+    });
+
+    await client.close();
+    await server.close();
+  });
+
+  it("keeps vault stats working when one note has unparseable frontmatter-like content", async () => {
+    const vault = await makeTempVault();
+    const windowsPath = String.raw`C:\Users\username\Documents\file.txt`;
+    await fs.writeFile(
+      path.join(vault, "confluence-export.md"),
+      [
+        "---json",
+        `{"source":"confluence","body":"\`\`\`powershell\\naws s3 cp \`'${windowsPath}'\` s3://bucket/\\n\`\`\`"}`,
+        "---",
+        "# Exported note",
+      ].join("\n"),
+      "utf8",
+    );
+    const context = createDomainContext(
+      getEnv({
+        ...process.env,
+        OBSIDIAN_VAULT_PATH: vault,
+        KOBSIDIAN_ALLOWED_ORIGINS: "http://localhost",
+      }),
+    );
+    const server = createServer(context);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    const client = new Client(
+      { name: "vault-stats-client", version: "1.0.0" },
+      { capabilities: {} },
+    );
+    await client.connect(clientTransport);
+
+    const result = await client.callTool({ name: "stats.vault", arguments: {} });
+
+    expect(result.structuredContent).toMatchObject({
+      totalNotes: expect.any(Number),
+      skippedNotes: expect.arrayContaining(["confluence-export.md"]),
+    });
 
     await client.close();
     await server.close();

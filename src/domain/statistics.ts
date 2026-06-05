@@ -83,13 +83,20 @@ export async function getVaultStatistics(context: DomainContext, args: { vaultPa
   let totalWords = 0;
   let totalLinks = 0;
   const tags = new Set<string>();
+  const skippedNotes: string[] = [];
 
   for (const absolutePath of await walkMarkdownFiles(vaultRoot)) {
     const relativePath = absolutePath.slice(vaultRoot.length + 1).replaceAll("\\", "/");
-    const noteStats = await getNoteStatistics(context, {
-      filePath: relativePath,
-      vaultPath: vaultRoot,
-    });
+    let noteStats: Awaited<ReturnType<typeof getNoteStatistics>>;
+    try {
+      noteStats = await getNoteStatistics(context, {
+        filePath: relativePath,
+        vaultPath: vaultRoot,
+      });
+    } catch {
+      skippedNotes.push(relativePath);
+      continue;
+    }
     totalNotes += 1;
     totalWords += noteStats.wordCount;
     totalLinks += noteStats.links.totalLinks;
@@ -105,5 +112,6 @@ export async function getVaultStatistics(context: DomainContext, args: { vaultPa
     uniqueTags: tags.size,
     allTags: [...tags].sort((left, right) => left.localeCompare(right)),
     avgWordsPerNote: Number((totalNotes > 0 ? totalWords / totalNotes : 0).toFixed(2)),
+    skippedNotes,
   };
 }

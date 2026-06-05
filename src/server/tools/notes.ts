@@ -51,6 +51,8 @@ import {
   mutationResultSchema,
 } from "../tool-schemas.js";
 
+type NoteStatistics = Awaited<ReturnType<typeof getNoteStatistics>>;
+
 async function handleEdit(context: DomainContext, args: NotesEditArgs) {
   if (args.mode === "replace") {
     return updateNote(context, {
@@ -93,6 +95,16 @@ async function handleEdit(context: DomainContext, args: NotesEditArgs) {
   });
 }
 
+function toNotesReadStats(stats: NoteStatistics) {
+  return {
+    ...stats,
+    words: stats.wordCount,
+    characters: stats.characterCount,
+    headings: stats.headings.count,
+    links: stats.links.totalLinks,
+  };
+}
+
 export const noteTools: ToolDefinition[] = [
   {
     name: "notes.read",
@@ -127,10 +139,11 @@ export const noteTools: ToolDefinition[] = [
       }
 
       if (wantStats) {
-        result.stats = await getNoteStatistics(context, {
+        const stats = await getNoteStatistics(context, {
           filePath: args.path,
           vaultPath: args.vaultPath,
         });
+        result.stats = toNotesReadStats(stats);
       }
 
       return result;
