@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-06-05
+
+> **Stats validation hotfix.** Fixes the reported MCP validation failures for
+> `notes.read` stats responses and makes `stats.vault` resilient to individual
+> notes with malformed frontmatter-like content.
+
+### Fixed
+
+- **`notes.read` stats output:** `include: ["stats"]` now returns
+  schema-compatible numeric `headings` and `links` fields instead of nested
+  objects that fail MCP output validation.
+- **`stats.vault` scans:** vault-wide statistics now skip individual notes that
+  cannot be parsed for stats and return their paths in `skippedNotes` instead
+  of failing the whole scan.
+
+### Changed
+
+- Release-facing version metadata in `package.json`, `manifest.json`, and
+  `server.json` is aligned at `0.3.3`.
+
 ## [0.3.2] — 2026-05-02
 
 > **Localized documentation release.** Adds Simplified Chinese,
