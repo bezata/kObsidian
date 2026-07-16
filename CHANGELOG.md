@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-07-16
+
+> **Client compatibility hardening.** Adds real-transport regression coverage
+> and a structured evidence path for diagnosing client, model/provider,
+> transport, and server compatibility reports.
+
+### Added
+
+- **Real-transport compatibility suite:** exercises the published MCP surface
+  over both a spawned stdio server and Streamable HTTP using the official SDK.
+- **Content-fidelity coverage:** verifies actual newlines, literal `\\n`
+  sequences, Unicode, tabs, quotes, and Windows-style backslashes survive
+  create, edit, and read round trips without normalization.
+- **Compatibility issue form:** requests the kObsidian/client versions,
+  model/provider, transport, sanitized configuration, minimal reproduction,
+  raw tool-call or JSON-RPC arguments, expected/actual results, and logs.
+- **Focused smoke command:** `bun run test:compat` runs the compatibility suite
+  independently of the full test matrix.
+
+### Changed
+
+- Testing documentation now explains evidence-based compatibility triage and
+  distinguishes a JSON newline escape (`"\\n"`) from a literal backslash plus
+  `n` (`"\\\\n"`).
+- Release-facing version metadata in `package.json`, `manifest.json`, and
+  `server.json` is aligned at `0.3.4`.
+
+### Verified
+
+- GitHub issue #32 was reproduced against kObsidian's real stdio transport and
+  traced through Hermes Agent's current and issue-time MCP paths. Standard JSON
+  newline escapes round-trip as actual newlines; literal backslash sequences
+  remain literal by design. No automatic unescaping or client-specific shim was
+  added because it would corrupt valid note content.
+
 ## [0.3.3] - 2026-06-05
 
 > **Stats validation hotfix.** Fixes the reported MCP validation failures for

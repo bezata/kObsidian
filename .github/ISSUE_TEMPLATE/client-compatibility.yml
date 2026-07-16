@@ -1,0 +1,115 @@
+name: Client compatibility report
+description: Report behavior that differs between MCP clients, models, providers, or transports.
+title: "[Compatibility]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve kObsidian interoperability. Compatibility problems can originate in the client, model/provider tool-call output, transport, SDK, or server. The details below let us reproduce the exact boundary without guessing.
+
+  - type: input
+    id: kobsidian-version
+    attributes:
+      label: kObsidian version
+      description: Run `system.version` if possible.
+      placeholder: 0.3.4
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: MCP client and version
+      placeholder: Hermes Agent <commit/version>, Codex <version>, Claude Desktop <version>, etc.
+    validations:
+      required: true
+
+  - type: input
+    id: model-provider
+    attributes:
+      label: Model and provider
+      description: Tool arguments are produced by the model/provider before the client sends them to MCP.
+      placeholder: Model name through OpenRouter, Anthropic, OpenAI, local llama.cpp, etc.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport
+      options:
+        - stdio
+        - Streamable HTTP
+        - Unknown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Sanitized MCP configuration
+      description: Remove API keys, bearer tokens, vault names, and private paths.
+      render: yaml
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Include the tool name, arguments as entered or generated, and the smallest sequence of calls that reproduces the behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: raw-arguments
+    attributes:
+      label: Raw tool-call or JSON-RPC arguments
+      description: Paste the exact `tool_call.function.arguments` or `params.arguments` captured before the MCP server receives it. This is essential for escaping and Unicode reports.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: For text encoding reports, include a hex dump or code points when possible—not only how a UI renders the string.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Redact credentials and private note content.
+      render: shell
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed credentials, tokens, private vault paths, and private note content.
+          required: true
+        - label: I distinguished actual control characters from literal escape text (for example, newline U+000A versus backslash + `n`).
+          required: true

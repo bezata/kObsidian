@@ -1,6 +1,6 @@
 {
   "name": "kobsidian-mcp",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "TypeScript MCP server for Obsidian with a filesystem-first LLM Wiki layer, Dataview / Canvas / Kanban / Mermaid / Marp / Templates tools, and both stdio and Streamable HTTP transports.",
   "type": "module",
   "mcpName": "io.github.bezata/kobsidian-mcp",
@@ -52,6 +52,7 @@
     "prepublishOnly": "bun run typecheck && bun run lint && bun run test && bun run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:compat": "vitest run tests/transport-compatibility.test.ts",
     "test:watch": "vitest",
     "lint": "biome check .",
     "format": "biome format --write ."
