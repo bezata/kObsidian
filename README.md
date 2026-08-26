@@ -782,7 +782,7 @@ Project conventions in [`AGENTS.md`](AGENTS.md).
 
 - **Pinned SDK floor.** `@modelcontextprotocol/sdk@^1.26.0` — mitigates
   `GHSA-345p-7cg4-v4c7` (cross-client response leak) and
-  `CVE-2026-0621` (UriTemplate ReDoS). This repo pins `1.29.0`.
+  `CVE-2026-0621` (UriTemplate ReDoS). This repo pins `1.30.0`.
 
 - **npm Trusted Publishing.** No long-lived `NPM_TOKEN` is stored in the
   repo. GitHub Actions mints a short-lived OIDC token on every tag push
@@ -811,7 +811,7 @@ Full notes in [`docs/SECURITY.md`](docs/SECURITY.md).
   the client's job.
 - **SDK floor** — `@modelcontextprotocol/sdk@^1.26.0` (mitigates
   `GHSA-345p-7cg4-v4c7` cross-client response leak + `CVE-2026-0621`
-  UriTemplate ReDoS). This repo pins `1.29.0`.
+  UriTemplate ReDoS). This repo pins `1.30.0`.
 
 ---
 

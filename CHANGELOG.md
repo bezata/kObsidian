@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-08-26
+
+> **Claude Code schema compatibility.** Restores the complete kObsidian tool
+> surface for clients that require JSON Schema 2020-12. The repair applies to
+> both local stdio and stateless Streamable HTTP without weakening runtime
+> input or structured-output validation.
+
+### Fixed
+
+- **Claude Code tool registration (issue #35):** tool input and output schemas
+  are now advertised as JSON Schema 2020-12, preventing current Claude Code
+  builds from rejecting the entire tool surface because of the SDK's draft-07
+  marker.
+- **Union-shaped tool inputs:** discriminated-union tools such as
+  `notes.create` retain their `oneOf` branches while also advertising the
+  object-shaped root required by MCP.
+
+### Changed
+
+- Upgraded `@modelcontextprotocol/sdk` from `1.29.0` to `1.30.0`.
+- Tool listing and invocation now use the SDK's low-level protocol handlers so
+  kObsidian can emit 2020-12 schemas while continuing to validate every input
+  and structured output against its source Zod schema at runtime.
+- Release-facing version metadata in `package.json`, `manifest.json`, and
+  `server.json` is aligned at `0.3.5`.
+
+### Verified
+
+- Real spawned-stdio and stateless Streamable HTTP compatibility tests assert
+  that all 66 tools expose object-rooted JSON Schema 2020-12 input and output
+  schemas, including discriminated unions.
+
 ## [0.3.4] - 2026-07-16
 
 > **Client compatibility hardening.** Adds real-transport regression coverage
@@ -481,10 +513,6 @@ attached to the release body, npm Trusted Publishing) end-to-end.
   probes `npm view kobsidian-mcp@<version>` first and exits cleanly
   if the version already exists on npm.
 
-[Unreleased]: https://github.com/bezata/kObsidian/compare/v0.1.2...HEAD
-[0.1.2]: https://github.com/bezata/kObsidian/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/bezata/kObsidian/compare/v0.1.0...v0.1.1
-
 ## [0.1.0] — 2026-04-23
 
 Initial public release. kObsidian lands on npm as `kobsidian-mcp@0.1.0`
@@ -611,4 +639,16 @@ Four skills at `skills/` trigger on natural language:
   compliance (CORS preflight / protocol version / origin 403),
   resource + prompt integration, full stdio E2E.
 
+[Unreleased]: https://github.com/bezata/kObsidian/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/bezata/kObsidian/compare/v0.3.4...v0.3.5
+[0.3.4]: https://github.com/bezata/kObsidian/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/bezata/kObsidian/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/bezata/kObsidian/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/bezata/kObsidian/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/bezata/kObsidian/compare/v0.2.5...v0.3.0
+[0.2.5]: https://github.com/bezata/kObsidian/compare/v0.2.1...v0.2.5
+[0.2.1]: https://github.com/bezata/kObsidian/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/bezata/kObsidian/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/bezata/kObsidian/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/bezata/kObsidian/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bezata/kObsidian/releases/tag/v0.1.0
