@@ -14,6 +14,29 @@ import { toolRegistry } from "../src/server/registry.js";
 import { makeTempVault } from "./helpers.js";
 
 const CLIENT_INFO = { name: "kobsidian-compatibility-test", version: "1.0.0" };
+const JSON_SCHEMA_2020_12_URI = "https://json-schema.org/draft/2020-12/schema";
+
+async function assertToolSchemaCompatibility(client: Client) {
+  const { tools } = await client.listTools();
+  expect(tools).toHaveLength(toolRegistry.length);
+
+  for (const tool of tools) {
+    expect(tool.inputSchema).toMatchObject({
+      $schema: JSON_SCHEMA_2020_12_URI,
+      type: "object",
+    });
+    expect(tool.outputSchema).toMatchObject({
+      $schema: JSON_SCHEMA_2020_12_URI,
+      type: "object",
+    });
+  }
+
+  const discriminatedUnionTool = tools.find((tool) => tool.name === "notes.create");
+  expect(discriminatedUnionTool?.inputSchema).toMatchObject({
+    type: "object",
+    oneOf: expect.any(Array),
+  });
+}
 
 async function assertContentFidelity(client: Client, vault: string, prefix: string) {
   const pathName = `${prefix}-content.md`;
@@ -86,8 +109,7 @@ describe("MCP transport compatibility", () => {
 
     try {
       await client.connect(transport);
-      const tools = await client.listTools();
-      expect(tools.tools).toHaveLength(toolRegistry.length);
+      await assertToolSchemaCompatibility(client);
       await assertContentFidelity(client, vault, "stdio");
     } finally {
       await client.close();
@@ -116,6 +138,7 @@ describe("MCP transport compatibility", () => {
 
     try {
       await client.connect(transport);
+      await assertToolSchemaCompatibility(client);
       await assertContentFidelity(client, vault, "http");
     } finally {
       await client.close();

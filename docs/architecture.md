@@ -118,7 +118,7 @@ src/
 │       └── merge.ts         # add cited section to concept/entity page
 │
 └── server/                  # MCP boundary
-    ├── create-server.ts     # registerTool for each entry; capabilities
+    ├── create-server.ts     # 2020-12 tool handlers + capabilities
     ├── registry.ts          # concatenates every tools/*.ts array
     ├── tool-definition.ts   # ToolDefinition { name, title, annotations, … }
     ├── tool-schemas.ts      # READ_ONLY / DESTRUCTIVE / IDEMPOTENT / …
@@ -202,3 +202,7 @@ the full contract.
   `tests/server-http-compliance.test.ts`. Uses the SDK's
   `InMemoryTransport.createLinkedPair()` and a mock Hono `fetch` for
   HTTP coverage — no real sockets opened.
+- **Client compatibility** — `tests/transport-compatibility.test.ts` spawns the
+  real stdio entrypoint and exercises stateless Streamable HTTP. It verifies
+  content fidelity plus JSON Schema 2020-12 input/output declarations for all
+  tools.

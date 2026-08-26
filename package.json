@@ -1,6 +1,6 @@
 {
   "name": "kobsidian-mcp",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "TypeScript MCP server for Obsidian with a filesystem-first LLM Wiki layer, Dataview / Canvas / Kanban / Mermaid / Marp / Templates tools, and both stdio and Streamable HTTP transports.",
   "type": "module",
   "mcpName": "io.github.bezata/kobsidian-mcp",
@@ -58,7 +58,7 @@
     "format": "biome format --write ."
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "gray-matter": "^4.0.3",
     "hono": "^4.12.14",
     "undici": "^6.21.0",

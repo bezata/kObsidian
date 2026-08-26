@@ -1,4 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  CallToolRequestSchema,
+  type CallToolResult,
+  ListToolsRequestSchema,
+  type Tool,
+} from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { PACKAGE_VERSION } from "../config/package-version.js";
 import { type DomainContext, createDomainContext } from "../domain/context.js";
@@ -83,6 +89,113 @@ function formatErrorMessage(error: { code: string; message: string }): string {
   return `${error.code}: ${error.message}`;
 }
 
+const JSON_SCHEMA_2020_12_URI = "https://json-schema.org/draft/2020-12/schema";
+
+function toMcpObjectSchema(schema: z.ZodTypeAny, io: "input" | "output"): Tool["inputSchema"] {
+  const jsonSchema = z.toJSONSchema(schema, {
+    target: "draft-2020-12",
+    io,
+  });
+
+  if (jsonSchema.type !== undefined && jsonSchema.type !== "object") {
+    throw new Error(`MCP ${io} schemas must describe objects (got ${jsonSchema.type})`);
+  }
+
+  // MCP requires an object-shaped root. Discriminated unions naturally emit
+  // only `oneOf`/`anyOf`, so add the object constraint without changing their
+  // branches.
+  return {
+    ...jsonSchema,
+    $schema: JSON_SCHEMA_2020_12_URI,
+    type: "object",
+  } as Tool["inputSchema"];
+}
+
+function protocolToolDefinition(tool: ToolDefinition): Tool {
+  return {
+    name: tool.name,
+    title: tool.title,
+    description: buildDescription(tool),
+    inputSchema: tool.inputSchema
+      ? toMcpObjectSchema(tool.inputSchema, "input")
+      : {
+          $schema: JSON_SCHEMA_2020_12_URI,
+          type: "object",
+          properties: {},
+          additionalProperties: false,
+        },
+    ...(tool.outputSchema ? { outputSchema: toMcpObjectSchema(tool.outputSchema, "output") } : {}),
+    ...(tool.annotations ? { annotations: tool.annotations } : {}),
+    execution: { taskSupport: "forbidden" },
+  };
+}
+
+function zodErrorMessage(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.length > 0 ? ` at ${issue.path.join(".")}` : "";
+      return `${issue.message}${path}`;
+    })
+    .join("; ");
+}
+
+function toolError(message: string): CallToolResult {
+  return {
+    content: [{ type: "text", text: message }],
+    isError: true,
+  };
+}
+
+function registerTools(server: McpServer, context: DomainContext): void {
+  const definitions = toolRegistry.map(protocolToolDefinition);
+  const toolsByName = new Map(toolRegistry.map((tool) => [tool.name, tool]));
+
+  // @modelcontextprotocol/sdk 1.30 still converts Zod v4 schemas to draft-07
+  // inside McpServer.registerTool. Claude Code now requires JSON Schema
+  // 2020-12 for outputSchema, so register the two tool protocol handlers on
+  // the underlying server while retaining Zod validation here.
+  server.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: definitions,
+  }));
+
+  server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const tool = toolsByName.get(request.params.name);
+    if (!tool) {
+      return toolError(`invalid_argument: Tool not found: ${request.params.name}`);
+    }
+
+    try {
+      const input = tool.inputSchema
+        ? await tool.inputSchema.safeParseAsync(request.params.arguments ?? {})
+        : { success: true as const, data: request.params.arguments ?? {} };
+      if (!input.success) {
+        return toolError(
+          `invalid_argument: Input validation error for ${tool.name}: ${zodErrorMessage(input.error)}`,
+        );
+      }
+
+      const result = await tool.handler(context, input.data);
+      if (typeof result !== "object" || result === null || Array.isArray(result)) {
+        return toolError(`internal: Tool ${tool.name} returned a non-object result`);
+      }
+
+      if (tool.outputSchema) {
+        const output = await tool.outputSchema.safeParseAsync(result);
+        if (!output.success) {
+          return toolError(
+            `internal: Output validation error for ${tool.name}: ${zodErrorMessage(output.error)}`,
+          );
+        }
+      }
+
+      const structuredContent = result as Record<string, unknown>;
+      return ok(structuredContent, getSummary(structuredContent) ?? `${tool.title} completed`);
+    } catch (error) {
+      return toolError(formatErrorMessage(toAppError(error)));
+    }
+  });
+}
+
 export function createServer(context: DomainContext = createDomainContext()) {
   const server = new McpServer(
     {
@@ -100,27 +213,7 @@ export function createServer(context: DomainContext = createDomainContext()) {
     },
   );
 
-  for (const tool of toolRegistry) {
-    server.registerTool(
-      tool.name,
-      {
-        title: tool.title,
-        description: buildDescription(tool),
-        inputSchema: tool.inputSchema ?? z.object({}),
-        outputSchema: tool.outputSchema,
-        ...(tool.annotations ? { annotations: tool.annotations } : {}),
-      },
-      async (args) => {
-        try {
-          const result = (await tool.handler(context, args)) as Record<string, unknown>;
-          return ok(result, getSummary(result) ?? `${tool.title} completed`);
-        } catch (error) {
-          const appError = toAppError(error);
-          throw new Error(formatErrorMessage(appError));
-        }
-      },
-    );
-  }
+  registerTools(server, context);
 
   registerWikiResources(server, context);
   registerWikiPrompts(server);

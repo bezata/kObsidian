@@ -63,7 +63,7 @@ audience claim won't match.
 
 ### Pinned SDK version
 
-`@modelcontextprotocol/sdk` is pinned at `1.29.0` in the `dependencies`
+`@modelcontextprotocol/sdk` is pinned at `1.30.0` in the `dependencies`
 block — above the `1.26.0` floor that addresses:
 
 - `CVE-2026-0621` — UriTemplate ReDoS

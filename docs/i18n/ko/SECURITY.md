@@ -31,7 +31,7 @@ npm trust github --file .github/workflows/release.yml --repo bezata/kObsidian
 
 ### SDK 버전 고정
 
-`@modelcontextprotocol/sdk`는 `1.29.0`에 고정되어 있으며 UriTemplate ReDoS와 cross-client response leak 수정이 포함된 하한보다 높은 버전입니다.
+`@modelcontextprotocol/sdk`는 `1.30.0`에 고정되어 있으며 UriTemplate ReDoS와 cross-client response leak 수정이 포함된 하한보다 높은 버전입니다.
 
 ### Biome 및 TypeScript strict
 

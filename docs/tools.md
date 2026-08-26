@@ -83,6 +83,11 @@ field carries `.describe()`, and complex tools carry `inputExamples` that
 are rendered into the registered tool description — so Anthropic clients,
 Glama, and other LLMs see inline worked examples without extra round trips.
 
+Both schemas are advertised as **JSON Schema 2020-12**. The same source Zod
+schemas validate arguments before a handler runs and validate structured
+output before it is returned. Discriminated unions keep their `oneOf` branches
+and receive the object-shaped root required by MCP.
+
 Clients that understand `structuredContent` (MCP 2025-06-18 onward) get
 typed JSON directly; older clients fall back to the stringified `content`
 block.
