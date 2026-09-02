@@ -1,24 +1,27 @@
 import { ensureDir, fileExists, writeUtf8 } from "../../lib/filesystem.js";
 import type { WikiInitArgs } from "../../schema/wiki.js";
 import type { DomainContext } from "../context.js";
+import { type WikiHeadings, resolveWikiHeadings } from "./headings.js";
 import { resolveWikiPaths } from "./paths.js";
 
-const INDEX_SEED = `# Wiki Index
+function indexSeed(headings: WikiHeadings): string {
+  return `# Wiki Index
 
 Auto-generated catalog of wiki pages. Run \`wiki.indexRebuild\` to refresh.
 
-## Sources
+## ${headings.indexSources}
 
 _No sources yet._
 
-## Concepts
+## ${headings.indexConcepts}
 
 _No concepts yet._
 
-## Entities
+## ${headings.indexEntities}
 
 _No entities yet._
 `;
+}
 
 const LOG_SEED = `# Wiki Log
 
@@ -103,6 +106,7 @@ sources and asks questions. This file documents the contract both sides rely on.
 
 export async function initWiki(context: DomainContext, args: WikiInitArgs) {
   const paths = resolveWikiPaths(context, args);
+  const headings = resolveWikiHeadings(context);
   const force = args.force ?? false;
   const created: string[] = [];
 
@@ -120,7 +124,7 @@ export async function initWiki(context: DomainContext, args: WikiInitArgs) {
   }
 
   const seeds: Array<{ absolute: string; relative: string; content: string }> = [
-    { absolute: paths.indexAbsolute, relative: paths.indexRelative, content: INDEX_SEED },
+    { absolute: paths.indexAbsolute, relative: paths.indexRelative, content: indexSeed(headings) },
     { absolute: paths.logAbsolute, relative: paths.logRelative, content: LOG_SEED },
     { absolute: paths.schemaAbsolute, relative: paths.schemaRelative, content: SCHEMA_SEED },
   ];

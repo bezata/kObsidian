@@ -107,8 +107,13 @@ summary: ...
 - `KOBSIDIAN_WIKI_LOG_FILE`
 - `KOBSIDIAN_WIKI_SCHEMA_FILE`
 - `KOBSIDIAN_WIKI_STALE_DAYS`
+- `KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING`（默认 `Sources`）
+- `KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING`（默认 `Concepts`）
+- `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING`（默认 `Entities`）
+- `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING`（默认 `Discussion`）
+- `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING`（默认 `Notable Facts`）
 
-每个 wiki 工具也接受单次调用的 `wikiRoot`。
+每个 wiki 工具也接受单次调用的 `wikiRoot`。`wiki.ingest` 还接受单次调用的 `indexHeading` / `conceptHeading` / `entityHeading`。
 
 ## MCP 资源与提示词
 

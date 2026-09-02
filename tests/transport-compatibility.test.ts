@@ -31,11 +31,19 @@ async function assertToolSchemaCompatibility(client: Client) {
     });
   }
 
+  // Discriminated unions must be advertised flat: Claude Code rejects (or
+  // strips) oneOf/anyOf at the root of a tool input schema.
   const discriminatedUnionTool = tools.find((tool) => tool.name === "notes.create");
   expect(discriminatedUnionTool?.inputSchema).toMatchObject({
     type: "object",
-    oneOf: expect.any(Array),
+    properties: {
+      kind: { enum: ["note", "folder"] },
+      path: { type: "string" },
+      content: { type: "string" },
+    },
+    required: ["kind", "path"],
   });
+  expect(discriminatedUnionTool?.inputSchema).not.toHaveProperty("oneOf");
 }
 
 async function assertContentFidelity(client: Client, vault: string, prefix: string) {

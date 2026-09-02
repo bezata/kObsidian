@@ -85,8 +85,13 @@ Glama, and other LLMs see inline worked examples without extra round trips.
 
 Both schemas are advertised as **JSON Schema 2020-12**. The same source Zod
 schemas validate arguments before a handler runs and validate structured
-output before it is returned. Discriminated unions keep their `oneOf` branches
-and receive the object-shaped root required by MCP.
+output before it is returned. Discriminated unions (`notes.create`,
+`notes.edit`, `canvas.edit`, …) are advertised **flattened**: the Anthropic API
+rejects `oneOf`/`anyOf`/`allOf` at the root of a tool schema, so
+[`src/server/json-schema.ts`](../src/server/json-schema.ts) merges every
+branch's fields into one `properties` map, turns the discriminant into an
+`enum`, and documents per-branch requirements on the discriminant's
+description. Calls are still validated against the original union at runtime.
 
 Clients that understand `structuredContent` (MCP 2025-06-18 onward) get
 typed JSON directly; older clients fall back to the stringified `content`

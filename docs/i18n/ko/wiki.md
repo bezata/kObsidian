@@ -106,8 +106,13 @@ summary: ...
 - `KOBSIDIAN_WIKI_LOG_FILE`
 - `KOBSIDIAN_WIKI_SCHEMA_FILE`
 - `KOBSIDIAN_WIKI_STALE_DAYS`
+- `KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING` (기본값 `Sources`)
+- `KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING` (기본값 `Concepts`)
+- `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING` (기본값 `Entities`)
+- `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING` (기본값 `Discussion`)
+- `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` (기본값 `Notable Facts`)
 
-각 wiki tool은 `wikiRoot` override도 받습니다.
+각 wiki tool은 `wikiRoot` override도 받습니다. `wiki.ingest`는 `indexHeading` / `conceptHeading` / `entityHeading` per-call override도 받습니다.
 
 ## MCP resources와 prompts
 

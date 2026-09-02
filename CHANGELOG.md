@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-09-02
+
+> **Write-tool regression fix + localized wiki headings.** Restores
+> `notes.create` / `notes.edit` / `notes.move` and the other union-shaped tools
+> for Claude Code, makes `wiki.ingest` proposals applicable in non-English
+> vaults, and turns a confusing structured-output error into a real
+> `not_found`.
+
+### Fixed
+
+- **Discriminated-union tools unusable from Claude Code (issue #38):**
+  `notes.create`, `notes.edit`, `notes.move`, `canvas.edit`, `kanban.card`,
+  `dataview.fields.read`, `dataview.fields.write`, `marp.read`, `marp.update`,
+  and `templates.use` advertised a root-level `oneOf` with no `properties`,
+  which the Anthropic API rejects and Claude Code presents to the model as an
+  empty schema. Union inputs are now flattened for advertisement: every
+  branch's fields appear once, the discriminant is an `enum`, and per-branch
+  requirements are documented on the discriminant's description. Runtime
+  validation still uses the original Zod schema.
+- **`notes.edit` missing-anchor errors:** `after-heading` / `after-block` on an
+  anchor that does not exist failed structured-output validation
+  (`summary: expected string, received undefined`) instead of reporting the
+  problem. They now return `not_found: Heading '<anchor>' not found in <path>`.
+
+### Added
+
+- **Configurable wiki headings (issue #39):**
+  `KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING`, `KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING`,
+  `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING`, `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING`,
+  and `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` localize the headings used by
+  `wiki.init`, `wiki.indexRebuild`, `wiki.ingest` proposals and stubs, and
+  `wiki.summaryMerge` defaults. `wiki.ingest` additionally accepts per-call
+  `indexHeading` / `conceptHeading` / `entityHeading` overrides.
+- **Always-applicable `proposedEdits`:** when the target heading is missing
+  from a page, `wiki.ingest` now proposes `append` (with the reason naming the
+  missing heading) instead of an anchor `notes.edit` would reject; index
+  headings carrying an `includeCounts` suffix are matched and returned verbatim.
+
+### Changed
+
+- `wiki.summaryMerge`'s `heading` description now states the real default
+  (the configured concept/entity page heading) instead of a timestamped one.
+- Release-facing version metadata in `package.json`, `manifest.json`, and
+  `server.json` is aligned at `0.3.6`.
+
+### Verified
+
+- `tests/tool-schemas.test.ts` asserts every advertised input/output schema is
+  object-rooted with no root-level composition keywords, and that all ten
+  discriminated-union tools expose their discriminant as an `enum` in
+  `properties`.
+- The packed npm tarball was installed into a clean directory and driven over
+  real stdio (`node` + the published `kobsidian-mcp` bin) against a production
+  vault with Portuguese headings: union write tools, `not_found` anchors,
+  `wiki.init` → `wiki.ingest` → apply-every-proposal, per-call overrides, the
+  `append` fallback, and count-suffixed index anchors all passed.
+- Through Claude Code 2.1.258 itself (`claude -p --mcp-config`), the
+  published 0.3.5 `notes.create` schema reaches the model with the root
+  `oneOf` stripped, `kind` pinned to `const: "note"`, and `required: []` — the
+  `folder` branch survives only in prose. 0.3.6 arrives intact as
+  `kind: enum ["note","folder"]`, `required: ["kind","path"]`, and the same
+  client reproduces the 0.3.5 `summary: expected string` error on a missing
+  heading and the 0.3.6 `not_found` replacement.
+
 ## [0.3.5] - 2026-08-26
 
 > **Claude Code schema compatibility.** Restores the complete kObsidian tool

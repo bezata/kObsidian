@@ -4,14 +4,10 @@ import { resolveVaultPath } from "../../lib/paths.js";
 import type { WikiSummaryMergeArgs } from "../../schema/wiki.js";
 import type { DomainContext } from "../context.js";
 import { escapeRegExp } from "../smart-insert.js";
+import { resolveWikiHeadings } from "./headings.js";
 import { initWiki } from "./init.js";
 import { resolveWikiPaths, todayIso } from "./paths.js";
 import { conceptBodySkeleton, entityBodySkeleton, renderWithFrontmatter } from "./schema.js";
-
-const DEFAULT_HEADING: Record<"concept" | "entity", string> = {
-  concept: "Discussion",
-  entity: "Notable Facts",
-};
 
 function formatNewSection(
   body: string,
@@ -69,7 +65,8 @@ export async function mergeSummary(context: DomainContext, args: WikiSummaryMerg
   const absolute = resolveVaultPath(paths.vaultRoot, args.targetPath);
   const updated = todayIso();
   const pageType = args.pageType ?? "concept";
-  const heading = args.heading ?? DEFAULT_HEADING[pageType];
+  const headings = resolveWikiHeadings(context);
+  const heading = args.heading ?? (pageType === "concept" ? headings.concept : headings.entity);
   const block = formatNewSection(args.newSection, {
     citationSource: args.citationSource,
     citationQuote: args.citationQuote,
@@ -87,7 +84,10 @@ export async function mergeSummary(context: DomainContext, args: WikiSummaryMerg
       citationSource: args.citationSource,
       updated,
     });
-    const skeleton = pageType === "concept" ? conceptBodySkeleton() : entityBodySkeleton();
+    const skeleton =
+      pageType === "concept"
+        ? conceptBodySkeleton(headings.concept)
+        : entityBodySkeleton(headings.entity);
     const bodyWithSection = insertAfterHeadingInContent(skeleton, heading, block);
     nextContent = renderWithFrontmatter(frontmatter, bodyWithSection);
   } else {

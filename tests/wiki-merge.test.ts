@@ -41,6 +41,35 @@ describe("wiki.summaryMerge", () => {
     expect(parsed.content).toContain("[[wiki/Sources/as-we-may-think.md]]");
   });
 
+  it("defaults to the configured page heading (issue #39)", async () => {
+    const vault = await makeTempVault();
+    const context = makeContext(vault, {
+      KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING: "Discussão",
+      KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING: "Fatos Notáveis",
+    });
+    await initWiki(context, {});
+
+    const concept = await mergeSummary(context, {
+      targetPath: "wiki/Concepts/memex.md",
+      newSection: "Trecho.",
+      pageType: "concept",
+    });
+    expect(concept.heading).toBe("Discussão");
+    const conceptRaw = await fs.readFile(path.join(vault, "wiki", "Concepts", "memex.md"), "utf8");
+    expect(conceptRaw).toContain("## Discussão\n\nTrecho.");
+    expect(conceptRaw).not.toContain("## Discussion");
+
+    const entity = await mergeSummary(context, {
+      targetPath: "wiki/Entities/bush.md",
+      newSection: "Engenheiro.",
+      pageType: "entity",
+      entityKind: "person",
+    });
+    expect(entity.heading).toBe("Fatos Notáveis");
+    const entityRaw = await fs.readFile(path.join(vault, "wiki", "Entities", "bush.md"), "utf8");
+    expect(entityRaw).toContain("## Fatos Notáveis\n\nEngenheiro.");
+  });
+
   it("creates an entity page with the requested kind when missing", async () => {
     const vault = await makeTempVault();
     const context = makeContext(vault);

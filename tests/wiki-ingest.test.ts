@@ -140,6 +140,140 @@ describe("wiki.ingest", () => {
     expect(parsed.content).toContain("[[clipped-article.md]]");
   });
 
+  it("targets configured headings and scaffolds stubs with them (issue #39)", async () => {
+    const vault = await makeTempVault();
+    const context = makeContext(vault, {
+      KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING: "Fontes",
+      KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING: "Discussão",
+      KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING: "Fatos Notáveis",
+    });
+    await initWiki(context, {});
+    expect(await readVaultFile(vault, "wiki/index.md")).toContain("## Fontes");
+    await fs.writeFile(
+      path.join(vault, "wiki", "Concepts", "memex.md"),
+      "---\ntype: concept\naliases: []\nrelated: []\nsources: []\nupdated: 2026-01-01\nsummary: s.\n---\n\n## Definição\n\n## Discussão\n\n## Relacionados\n",
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(vault, "wiki", "Entities", "vannevar-bush.md"),
+      "---\ntype: entity\nkind: person\naliases: []\nrelated: []\nsources: []\nupdated: 2026-01-01\nsummary: s.\n---\n\n## Visão Geral\n\n## Fatos Notáveis\n\n## Relacionados\n",
+      "utf8",
+    );
+
+    const result = await ingestSource(context, {
+      title: "As We May Think",
+      content: "Memex paper.",
+      sourceType: "paper",
+      summary: "The memex paper.",
+      ingestedAt: "2026-04-23",
+      relatedConcepts: ["Memex", "Trilhas Associativas"],
+      relatedEntities: ["Vannevar Bush"],
+    });
+
+    const byPath = new Map(result.proposedEdits.map((p) => [p.path, p]));
+    expect(byPath.get("wiki/index.md")).toMatchObject({
+      operation: "insertAfterHeading",
+      heading: "Fontes",
+    });
+    expect(byPath.get("wiki/Concepts/memex.md")).toMatchObject({
+      operation: "insertAfterHeading",
+      heading: "Discussão",
+    });
+    expect(byPath.get("wiki/Entities/vannevar-bush.md")).toMatchObject({
+      operation: "insertAfterHeading",
+      heading: "Fatos Notáveis",
+    });
+    expect(byPath.get("wiki/Concepts/trilhas-associativas.md")?.suggestedContent).toContain(
+      "## Discussão",
+    );
+  });
+
+  it("lets per-call heading overrides win over env", async () => {
+    const vault = await makeTempVault();
+    const context = makeContext(vault, { KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING: "Discussão" });
+    await initWiki(context, {});
+    await fs.writeFile(
+      path.join(vault, "wiki", "Concepts", "memex.md"),
+      "---\ntype: concept\naliases: []\nrelated: []\nsources: []\nupdated: 2026-01-01\nsummary: s.\n---\n\n## Notes\n",
+      "utf8",
+    );
+    await fs.writeFile(path.join(vault, "wiki", "index.md"), "# Índice\n\n## Fontes\n", "utf8");
+
+    const result = await ingestSource(context, {
+      title: "Override",
+      content: "body",
+      sourceType: "note",
+      summary: "s",
+      ingestedAt: "2026-04-23",
+      relatedConcepts: ["Memex", "Novo"],
+      indexHeading: "Fontes",
+      conceptHeading: "Notes",
+    });
+
+    const byPath = new Map(result.proposedEdits.map((p) => [p.path, p]));
+    expect(byPath.get("wiki/index.md")).toMatchObject({
+      operation: "insertAfterHeading",
+      heading: "Fontes",
+    });
+    expect(byPath.get("wiki/Concepts/memex.md")).toMatchObject({
+      operation: "insertAfterHeading",
+      heading: "Notes",
+    });
+    expect(byPath.get("wiki/Concepts/novo.md")?.suggestedContent).toContain("## Notes");
+  });
+
+  it("degrades to append when the target heading is missing so proposals stay applicable", async () => {
+    const vault = await makeTempVault();
+    const context = makeContext(vault);
+    await initWiki(context, {});
+    await fs.writeFile(path.join(vault, "wiki", "index.md"), "# Índice\n\n## Fontes\n", "utf8");
+    await fs.writeFile(
+      path.join(vault, "wiki", "Concepts", "memex.md"),
+      "---\ntype: concept\naliases: []\nrelated: []\nsources: []\nupdated: 2026-01-01\nsummary: s.\n---\n\n## Discussão\n",
+      "utf8",
+    );
+
+    const result = await ingestSource(context, {
+      title: "Fallback",
+      content: "body",
+      sourceType: "note",
+      summary: "s",
+      ingestedAt: "2026-04-23",
+      relatedConcepts: ["Memex"],
+    });
+
+    const byPath = new Map(result.proposedEdits.map((p) => [p.path, p]));
+    expect(byPath.get("wiki/index.md")?.operation).toBe("append");
+    expect(byPath.get("wiki/index.md")?.heading).toBeUndefined();
+    expect(byPath.get("wiki/index.md")?.reason).toContain("Heading 'Sources' was not found");
+    expect(byPath.get("wiki/Concepts/memex.md")?.operation).toBe("append");
+    expect(byPath.get("wiki/Concepts/memex.md")?.reason).toContain(
+      "Heading 'Discussion' was not found",
+    );
+  });
+
+  it("anchors on count-suffixed index headings written by includeCounts", async () => {
+    const vault = await makeTempVault();
+    const context = makeContext(vault);
+    await initWiki(context, {});
+    await fs.writeFile(
+      path.join(vault, "wiki", "index.md"),
+      "# Wiki Index\n\n## Sources (2)\n\n- a\n- b\n\n## Concepts (0)\n",
+      "utf8",
+    );
+
+    const result = await ingestSource(context, {
+      title: "Counted",
+      content: "body",
+      sourceType: "note",
+      summary: "s",
+      ingestedAt: "2026-04-23",
+    });
+
+    const index = result.proposedEdits.find((p) => p.path === "wiki/index.md");
+    expect(index).toMatchObject({ operation: "insertAfterHeading", heading: "Sources (2)" });
+  });
+
   it("auto-initializes the wiki if missing", async () => {
     const vault = await makeTempVault();
     const context = makeContext(vault);

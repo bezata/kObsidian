@@ -3,6 +3,7 @@ import { fileExists, readUtf8, walkMarkdownFiles, writeUtf8 } from "../../lib/fi
 import { toVaultRelativePath } from "../../lib/paths.js";
 import type { WikiIndexRebuildArgs } from "../../schema/wiki.js";
 import type { DomainContext } from "../context.js";
+import { resolveWikiHeadings } from "./headings.js";
 import { initWiki } from "./init.js";
 import { type WikiPaths, resolveWikiPaths } from "./paths.js";
 import { readFrontmatter } from "./schema.js";
@@ -72,15 +73,16 @@ export async function rebuildIndex(context: DomainContext, args: WikiIndexRebuil
     collectEntries(paths, paths.entitiesAbsolute),
   ]);
   const includeCounts = args.includeCounts ?? false;
+  const headings = resolveWikiHeadings(context);
 
   const body = [
     "# Wiki Index",
     "",
     "Auto-generated catalog of wiki pages. Rebuilt with `wiki.indexRebuild`.",
     "",
-    renderSection("Sources", sources, "_No sources yet._", includeCounts),
-    renderSection("Concepts", concepts, "_No concepts yet._", includeCounts),
-    renderSection("Entities", entities, "_No entities yet._", includeCounts),
+    renderSection(headings.indexSources, sources, "_No sources yet._", includeCounts),
+    renderSection(headings.indexConcepts, concepts, "_No concepts yet._", includeCounts),
+    renderSection(headings.indexEntities, entities, "_No entities yet._", includeCounts),
   ].join("\n");
 
   await writeUtf8(paths.indexAbsolute, body);

@@ -5,11 +5,12 @@ import {
   ListToolsRequestSchema,
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
+import type { z } from "zod";
 import { PACKAGE_VERSION } from "../config/package-version.js";
 import { type DomainContext, createDomainContext } from "../domain/context.js";
 import { toAppError } from "../lib/errors.js";
 import { ok } from "../lib/results.js";
+import { JSON_SCHEMA_2020_12_URI, toMcpObjectSchema } from "./json-schema.js";
 import { registerWikiPrompts } from "./prompts.js";
 import { toolRegistry } from "./registry.js";
 import { registerWikiResources } from "./resources.js";
@@ -87,28 +88,6 @@ function getSummary(result: unknown): string | undefined {
 
 function formatErrorMessage(error: { code: string; message: string }): string {
   return `${error.code}: ${error.message}`;
-}
-
-const JSON_SCHEMA_2020_12_URI = "https://json-schema.org/draft/2020-12/schema";
-
-function toMcpObjectSchema(schema: z.ZodTypeAny, io: "input" | "output"): Tool["inputSchema"] {
-  const jsonSchema = z.toJSONSchema(schema, {
-    target: "draft-2020-12",
-    io,
-  });
-
-  if (jsonSchema.type !== undefined && jsonSchema.type !== "object") {
-    throw new Error(`MCP ${io} schemas must describe objects (got ${jsonSchema.type})`);
-  }
-
-  // MCP requires an object-shaped root. Discriminated unions naturally emit
-  // only `oneOf`/`anyOf`, so add the object constraint without changing their
-  // branches.
-  return {
-    ...jsonSchema,
-    $schema: JSON_SCHEMA_2020_12_URI,
-    type: "object",
-  } as Tool["inputSchema"];
 }
 
 function protocolToolDefinition(tool: ToolDefinition): Tool {

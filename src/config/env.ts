@@ -20,6 +20,37 @@ const envSchema = z.object({
   KOBSIDIAN_WIKI_INDEX_FILE: z.string().default("index.md"),
   KOBSIDIAN_WIKI_LOG_FILE: z.string().default("log.md"),
   KOBSIDIAN_WIKI_SCHEMA_FILE: z.string().default("wiki-schema.md"),
+  KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING: z
+    .string()
+    .min(1)
+    .default("Sources")
+    .describe(
+      "index.md section heading that lists source pages; wiki.ingest files new sources under it.",
+    ),
+  KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING: z
+    .string()
+    .min(1)
+    .default("Concepts")
+    .describe("index.md section heading that lists concept pages."),
+  KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING: z
+    .string()
+    .min(1)
+    .default("Entities")
+    .describe("index.md section heading that lists entity pages."),
+  KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING: z
+    .string()
+    .min(1)
+    .default("Discussion")
+    .describe(
+      "Heading on concept pages that receives wiki.ingest citations and wiki.summaryMerge sections; also used when scaffolding concept stubs.",
+    ),
+  KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING: z
+    .string()
+    .min(1)
+    .default("Notable Facts")
+    .describe(
+      "Heading on entity pages that receives wiki.ingest citations and wiki.summaryMerge sections; also used when scaffolding entity stubs.",
+    ),
   KOBSIDIAN_WIKI_STALE_DAYS: z.coerce.number().int().min(1).max(3650).default(180),
   KOBSIDIAN_VAULT_DISCOVERY: z
     .enum(["on", "off"])
