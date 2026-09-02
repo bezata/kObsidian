@@ -52,6 +52,13 @@ const envSchema = z.object({
       "Heading on entity pages that receives wiki.ingest citations and wiki.summaryMerge sections; also used when scaffolding entity stubs.",
     ),
   KOBSIDIAN_WIKI_STALE_DAYS: z.coerce.number().int().min(1).max(3650).default(180),
+  KOBSIDIAN_VAULT_CONFIG_FILE: z
+    .string()
+    .min(1)
+    .default(".kobsidian.json")
+    .describe(
+      "Vault-relative path of the per-vault JSON config file. Values in it override the KOBSIDIAN_WIKI_* env vars for that vault; per-call tool arguments override both.",
+    ),
   KOBSIDIAN_VAULT_DISCOVERY: z
     .enum(["on", "off"])
     .default("on")

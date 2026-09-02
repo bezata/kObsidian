@@ -111,8 +111,9 @@ summary: ...
 - `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING`（デフォルト `Entities`）
 - `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING`（デフォルト `Discussion`）
 - `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING`（デフォルト `Notable Facts`）
+- `KOBSIDIAN_VAULT_CONFIG_FILE`（デフォルト `.kobsidian.json`）
 
-各 wiki tool は `wikiRoot` override も受け取ります。`wiki.ingest` は `indexHeading` / `conceptHeading` / `entityHeading` の per-call override も受け取ります。
+各 wiki tool は `wikiRoot` override も受け取ります。`wiki.ingest` は `indexHeading` / `conceptHeading` / `entityHeading` の per-call override も受け取ります。同じ設定は vault ルートの `.kobsidian.json` で vault ごとに指定でき、優先順位は per-call → ファイル → env → デフォルトです。
 
 ## MCP resources と prompts
 

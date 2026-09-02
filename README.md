@@ -709,12 +709,43 @@ Details in [`docs/tools.md`](docs/tools.md).
 | `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING` | `Entities` | `index.md` section that lists entities. |
 | `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING` | `Discussion` | Concept-page heading that receives `wiki.ingest` citations / `wiki.summaryMerge` sections. |
 | `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` | `Notable Facts` | Entity-page heading that receives `wiki.ingest` citations / `wiki.summaryMerge` sections. |
+| `KOBSIDIAN_VAULT_CONFIG_FILE` | `.kobsidian.json` | Vault-relative path of the per-vault config file (below). |
 
 Every wiki tool also accepts a per-call `wikiRoot` override, and `wiki.ingest`
 accepts per-call `indexHeading` / `conceptHeading` / `entityHeading` overrides
 for vaults whose pages use localized headings (e.g. `## Fontes`). When a
 target heading is missing from a page, the proposal degrades to `append` so it
 can still be applied via `notes.edit`.
+
+### Per-vault config file
+
+Settings that belong to one vault rather than to the server — folder names,
+filenames, and section headings of a localized wiki — go in a
+`.kobsidian.json` at the vault root. Every key is optional and beats the
+matching env var; a per-call tool argument beats both
+(**per-call → `.kobsidian.json` → env → default**).
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/bezata/kObsidian/main/docs/kobsidian.config.schema.json",
+  "wiki": {
+    "root": "wiki",
+    "sourcesDir": "Fontes",
+    "staleDays": 90,
+    "headings": {
+      "indexSources": "Fontes",
+      "indexConcepts": "Conceitos",
+      "indexEntities": "Entidades",
+      "conceptPage": "Discussão",
+      "entityPage": "Fatos Notáveis"
+    }
+  }
+}
+```
+
+Unknown keys and malformed JSON are rejected with the file path in the error
+so typos surface immediately; `vault.current` returns the effective
+configuration under `config` (or the error).
 
 ---
 

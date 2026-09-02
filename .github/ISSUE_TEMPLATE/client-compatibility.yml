@@ -12,7 +12,7 @@ body:
     attributes:
       label: kObsidian version
       description: Run `system.version` if possible.
-      placeholder: 0.3.6
+      placeholder: 0.3.7
     validations:
       required: true
 

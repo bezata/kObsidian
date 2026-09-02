@@ -1,5 +1,12 @@
 import type { DomainContext } from "../../domain/context.js";
+import {
+  vaultConfigExists,
+  vaultConfigFileName,
+  vaultWikiConfig,
+} from "../../domain/vault-config.js";
 import { applyAllowDeny, discoverVaults, resolveSelector } from "../../domain/vaults.js";
+import { resolveWikiHeadings } from "../../domain/wiki/headings.js";
+import { resolveWikiPaths } from "../../domain/wiki/paths.js";
 import { AppError } from "../../lib/errors.js";
 import {
   type VaultCurrentArgs,
@@ -20,6 +27,44 @@ import type { ToolDefinition } from "../tool-definition.js";
 import { ADDITIVE, IDEMPOTENT_ADDITIVE, READ_ONLY } from "../tool-schemas.js";
 
 const CACHE_TTL_MS = 30_000;
+
+// Effective wiki settings for a vault after the full precedence chain
+// (per-call arg > config file > env > default), so the agent can explain to
+// the user which headings / folders will be used and where to change them.
+function effectiveConfig(context: DomainContext, vaultRoot: string) {
+  const file = vaultConfigFileName(context);
+  let exists = false;
+  try {
+    exists = vaultConfigExists(context, vaultRoot);
+    const paths = resolveWikiPaths(context, { vaultPath: vaultRoot });
+    const headings = resolveWikiHeadings(context, { vaultPath: vaultRoot });
+    const staleDays =
+      vaultWikiConfig(context, vaultRoot).staleDays ?? context.env.KOBSIDIAN_WIKI_STALE_DAYS;
+    return {
+      file,
+      exists,
+      wiki: {
+        root: paths.rootRelative,
+        sourcesDir: paths.sourcesDirName,
+        conceptsDir: paths.conceptsDirName,
+        entitiesDir: paths.entitiesDirName,
+        indexFile: paths.indexFileName,
+        logFile: paths.logFileName,
+        schemaFile: paths.schemaFileName,
+        staleDays,
+        headings: {
+          indexSources: headings.indexSources,
+          indexConcepts: headings.indexConcepts,
+          indexEntities: headings.indexEntities,
+          conceptPage: headings.concept,
+          entityPage: headings.entity,
+        },
+      },
+    };
+  } catch (error) {
+    return { file, exists, error: error instanceof Error ? error.message : String(error) };
+  }
+}
 
 async function ensureDiscovered(context: DomainContext, refresh = false) {
   const now = Date.now();
@@ -89,7 +134,7 @@ export const vaultTools: ToolDefinition[] = [
     name: "vault.current",
     title: "Current Active Vault",
     description:
-      "Return the vault that filesystem tools (notes.*, tags.*, dataview.*, blocks.*, canvas.*, kanban.*, marp.*, templates.*, tasks.*, links.*, wiki.*, stats.vault) would resolve to right now, plus the full precedence chain so the LLM can explain to the user why that vault was picked. `reason` is `session-selected` (vault.select was called), `env-default` (fell back to OBSIDIAN_VAULT_PATH), or `none` (nothing configured — tools will fail until vault.select or an env var is set). When OBSIDIAN_API_URL is configured, the response also carries an `obsidianLiveInstance` note reminding the caller that workspace.* and commands.* tools target whichever vault the live Obsidian process has open, NOT the filesystem vault selected here. Read-only.",
+      "Return the vault that filesystem tools (notes.*, tags.*, dataview.*, blocks.*, canvas.*, kanban.*, marp.*, templates.*, tasks.*, links.*, wiki.*, stats.vault) would resolve to right now, plus the full precedence chain so the LLM can explain to the user why that vault was picked. `reason` is `session-selected` (vault.select was called), `env-default` (fell back to OBSIDIAN_VAULT_PATH), or `none` (nothing configured — tools will fail until vault.select or an env var is set). When OBSIDIAN_API_URL is configured, the response also carries an `obsidianLiveInstance` note reminding the caller that workspace.* and commands.* tools target whichever vault the live Obsidian process has open, NOT the filesystem vault selected here. Also returns `config`: the effective per-vault wiki settings (folders, filenames, `staleDays`, headings) after the precedence chain per-call argument → `.kobsidian.json` in the vault (path via `KOBSIDIAN_VAULT_CONFIG_FILE`) → `KOBSIDIAN_WIKI_*` env → defaults, with the config file name and whether it exists, or an `error` when the file is malformed. Read-only.",
     inputSchema: vaultCurrentArgsSchema,
     outputSchema: vaultCurrentOutputSchema,
     annotations: READ_ONLY,
@@ -103,6 +148,7 @@ export const vaultTools: ToolDefinition[] = [
         envDefault: context.env.OBSIDIAN_VAULT_PATH
           ? { path: context.env.OBSIDIAN_VAULT_PATH }
           : null,
+        config: active ? effectiveConfig(context, active.path) : null,
         ...(obsidianLiveInstance(context)
           ? { obsidianLiveInstance: obsidianLiveInstance(context) }
           : {}),

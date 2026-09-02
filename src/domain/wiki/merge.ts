@@ -65,7 +65,7 @@ export async function mergeSummary(context: DomainContext, args: WikiSummaryMerg
   const absolute = resolveVaultPath(paths.vaultRoot, args.targetPath);
   const updated = todayIso();
   const pageType = args.pageType ?? "concept";
-  const headings = resolveWikiHeadings(context);
+  const headings = resolveWikiHeadings(context, args);
   const heading = args.heading ?? (pageType === "concept" ? headings.concept : headings.entity);
   const block = formatNewSection(args.newSection, {
     citationSource: args.citationSource,

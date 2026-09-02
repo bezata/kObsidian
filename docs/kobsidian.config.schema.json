@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "wiki": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "description": "Wiki directory under the vault (default `wiki`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "sourcesDir": {
+          "description": "Per-source summary pages directory (default `Sources`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "conceptsDir": {
+          "description": "Concept pages directory (default `Concepts`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "entitiesDir": {
+          "description": "Entity pages directory (default `Entities`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "indexFile": {
+          "description": "Catalog filename (default `index.md`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "logFile": {
+          "description": "Log filename (default `log.md`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "schemaFile": {
+          "description": "Seed schema filename (default `wiki-schema.md`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "staleDays": {
+          "description": "wiki.lint stale-page threshold in days (default 180).",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3650
+        },
+        "headings": {
+          "type": "object",
+          "properties": {
+            "indexSources": {
+              "description": "index.md section listing source pages.",
+              "type": "string",
+              "minLength": 1
+            },
+            "indexConcepts": {
+              "description": "index.md section listing concept pages.",
+              "type": "string",
+              "minLength": 1
+            },
+            "indexEntities": {
+              "description": "index.md section listing entity pages.",
+              "type": "string",
+              "minLength": 1
+            },
+            "conceptPage": {
+              "description": "Concept-page heading that receives wiki.ingest citations / summaryMerge sections.",
+              "type": "string",
+              "minLength": 1
+            },
+            "entityPage": {
+              "description": "Entity-page heading that receives wiki.ingest citations / summaryMerge sections.",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$id": "https://raw.githubusercontent.com/bezata/kObsidian/main/docs/kobsidian.config.schema.json",
+  "title": "kObsidian per-vault configuration (.kobsidian.json)"
+}

@@ -73,7 +73,7 @@ export async function rebuildIndex(context: DomainContext, args: WikiIndexRebuil
     collectEntries(paths, paths.entitiesAbsolute),
   ]);
   const includeCounts = args.includeCounts ?? false;
-  const headings = resolveWikiHeadings(context);
+  const headings = resolveWikiHeadings(context, args);
 
   const body = [
     "# Wiki Index",
