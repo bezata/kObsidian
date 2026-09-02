@@ -184,7 +184,7 @@ export const noteTools: ToolDefinition[] = [
     name: "notes.edit",
     title: "Edit Note",
     description:
-      "Mutate the body of an existing note. The `mode` field selects how `content` is applied: `replace` overwrites the whole note; `append` adds to the end; `prepend` adds after the frontmatter (or at the top if none); `after-heading` inserts after the first heading whose text matches `anchor` (no leading `#`); `after-block` inserts after the block reference `^anchor`. Fails if the note does not exist — use `notes.create` first. `replace` mode is idempotent-destructive; the others are additive.",
+      "Mutate the body of an existing note. The `mode` field selects how `content` is applied: `replace` overwrites the whole note; `append` adds to the end; `prepend` adds after the frontmatter (or at the top if none); `after-heading` inserts at the top of the section under the first heading whose text matches `anchor` (no leading `#`) — after the heading's blank line, joining an existing list when both sides are list items; `after-block` inserts after the block reference `^anchor`. Fails if the note does not exist — use `notes.create` first. `replace` mode is idempotent-destructive; the others are additive.",
     inputSchema: notesEditArgsSchema,
     outputSchema: mutationResultSchema,
     annotations: ADDITIVE,

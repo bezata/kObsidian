@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`notes.edit` `after-heading` placement:** content now lands at the top of
+  the heading's section (after the heading and its blank line) instead of on
+  the line directly under the heading, and a bullet inserted above an existing
+  list joins that list rather than starting a second one. A blank line is kept
+  before paragraphs and headings so an inserted bullet never swallows the next
+  paragraph as a lazy continuation. `after-heading` and `after-block` also no
+  longer write a second trailing newline to the file.
+
 ## [0.3.6] - 2026-09-02
 
 > **Write-tool regression fix + localized wiki headings.** Restores
