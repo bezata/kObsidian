@@ -111,8 +111,9 @@ summary: ...
 - `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING` (기본값 `Entities`)
 - `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING` (기본값 `Discussion`)
 - `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` (기본값 `Notable Facts`)
+- `KOBSIDIAN_VAULT_CONFIG_FILE` (기본값 `.kobsidian.json`)
 
-각 wiki tool은 `wikiRoot` override도 받습니다. `wiki.ingest`는 `indexHeading` / `conceptHeading` / `entityHeading` per-call override도 받습니다.
+각 wiki tool은 `wikiRoot` override도 받습니다. `wiki.ingest`는 `indexHeading` / `conceptHeading` / `entityHeading` per-call override도 받습니다. vault 루트의 `.kobsidian.json` 파일로 같은 설정을 vault별로 지정할 수 있으며, 우선순위는 per-call → 파일 → env → 기본값입니다.
 
 ## MCP resources와 prompts
 

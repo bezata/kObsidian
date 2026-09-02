@@ -112,8 +112,9 @@ summary: ...
 - `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING`（默认 `Entities`）
 - `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING`（默认 `Discussion`）
 - `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING`（默认 `Notable Facts`）
+- `KOBSIDIAN_VAULT_CONFIG_FILE`（默认 `.kobsidian.json`）
 
-每个 wiki 工具也接受单次调用的 `wikiRoot`。`wiki.ingest` 还接受单次调用的 `indexHeading` / `conceptHeading` / `entityHeading`。
+每个 wiki 工具也接受单次调用的 `wikiRoot`。`wiki.ingest` 还接受单次调用的 `indexHeading` / `conceptHeading` / `entityHeading`。同样的设置也可以写在 vault 根目录的 `.kobsidian.json` 中按 vault 生效，优先级为：单次调用参数 → 文件 → 环境变量 → 默认值。
 
 ## MCP 资源与提示词
 

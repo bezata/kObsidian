@@ -202,6 +202,44 @@ accepts a per-call `wikiRoot` override:
 | `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING` | `Entities` |
 | `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING` | `Discussion` |
 | `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` | `Notable Facts` |
+| `KOBSIDIAN_VAULT_CONFIG_FILE` | `.kobsidian.json` |
+
+### Per-vault config file (`.kobsidian.json`)
+
+Env vars are server-wide, which does not fit a session that switches between
+vaults with different conventions. A `.kobsidian.json` at the vault root
+carries the same settings for that vault only, and wins over env; a per-call
+tool argument wins over both (**per-call → file → env → default**):
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/bezata/kObsidian/main/docs/kobsidian.config.schema.json",
+  "wiki": {
+    "root": "wiki",
+    "sourcesDir": "Fontes",
+    "conceptsDir": "Conceitos",
+    "entitiesDir": "Entidades",
+    "indexFile": "index.md",
+    "logFile": "log.md",
+    "schemaFile": "wiki-schema.md",
+    "staleDays": 90,
+    "headings": {
+      "indexSources": "Fontes",
+      "indexConcepts": "Conceitos",
+      "indexEntities": "Entidades",
+      "conceptPage": "Discussão",
+      "entityPage": "Fatos Notáveis"
+    }
+  }
+}
+```
+
+Every key is optional. The file is re-read when it changes (no restart), and
+`vault.current` returns the effective values under `config`. Unknown keys and
+malformed JSON fail with the file path in the message rather than being
+ignored, so a typo cannot silently leave a vault on the English defaults. Point
+`KOBSIDIAN_VAULT_CONFIG_FILE` at another vault-relative path to rename or
+relocate the file.
 
 ### Localized headings
 

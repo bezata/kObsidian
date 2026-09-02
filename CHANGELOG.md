@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-09-02
+
+> **Per-vault configuration + cleaner inserts.** Localized wikis can now be
+> configured inside the vault instead of through server-wide env vars, and
+> `notes.edit` `after-heading` produces well-formed sections.
+
+### Added
+
+- **Per-vault config file (issue #39, option 3):** a `.kobsidian.json` at the
+  vault root (path via `KOBSIDIAN_VAULT_CONFIG_FILE`) sets `wiki.root`, the
+  `Sources` / `Concepts` / `Entities` directory names, the index / log / schema
+  filenames, `staleDays`, and the five section headings for that vault.
+  Precedence is per-call argument → config file → `KOBSIDIAN_WIKI_*` env →
+  built-in default, so multi-vault sessions no longer need one env block to fit
+  every vault. Unknown keys and malformed JSON fail loudly with the file path in
+  the message; `vault.current` now returns `config` with the effective settings
+  (or the error). A JSON Schema for editor completion is published at
+  `docs/kobsidian.config.schema.json`.
+
 ### Fixed
 
 - **`notes.edit` `after-heading` placement:** content now lands at the top of
@@ -16,6 +35,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before paragraphs and headings so an inserted bullet never swallows the next
   paragraph as a lazy continuation. `after-heading` and `after-block` also no
   longer write a second trailing newline to the file.
+
+### Changed
+
+- Release-facing version metadata in `package.json`, `manifest.json`, and
+  `server.json` is aligned at `0.3.7`.
+
+### Verified
+
+- `tests/vault-config.test.ts` covers precedence (per-call → file → env →
+  default), layout and heading overrides, `staleDays`, malformed JSON, unknown
+  keys, live re-read after edits, `KOBSIDIAN_VAULT_CONFIG_FILE`, and the
+  `vault.current` report.
+- Real-vault run over stdio with decoy env headings and a `kobsidian.json`
+  inside the scratch folder: the file wins, `wiki.init` → `wiki.ingest` →
+  apply-every-proposal produces `## Discussão\n\n- From [[…]]` sections.
 
 ## [0.3.6] - 2026-09-02
 

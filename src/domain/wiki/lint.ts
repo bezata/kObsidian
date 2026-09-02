@@ -11,6 +11,7 @@ import {
   normalizeLinkTarget,
   resolveIndexedLink,
 } from "../links.js";
+import { vaultWikiConfig } from "../vault-config.js";
 import { type WikiPaths, classifyWikiPath, isInsideWiki, resolveWikiPaths } from "./paths.js";
 
 type OrphanFinding = { path: string; reason: string };
@@ -104,7 +105,10 @@ function classifyMissingTarget(
 
 export async function lintWiki(context: DomainContext, args: WikiLintArgs) {
   const paths = resolveWikiPaths(context, args);
-  const staleDays = args.staleDays ?? context.env.KOBSIDIAN_WIKI_STALE_DAYS;
+  const staleDays =
+    args.staleDays ??
+    vaultWikiConfig(context, paths.vaultRoot).staleDays ??
+    context.env.KOBSIDIAN_WIKI_STALE_DAYS;
   const noteIndex: NoteIndex = await collectNoteIndex(paths.vaultRoot);
 
   const wikiFiles = await loadWikiFiles(paths);

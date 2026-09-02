@@ -106,7 +106,7 @@ sources and asks questions. This file documents the contract both sides rely on.
 
 export async function initWiki(context: DomainContext, args: WikiInitArgs) {
   const paths = resolveWikiPaths(context, args);
-  const headings = resolveWikiHeadings(context);
+  const headings = resolveWikiHeadings(context, args);
   const force = args.force ?? false;
   const created: string[] = [];
 

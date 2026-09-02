@@ -2,6 +2,7 @@ import path from "node:path";
 import { AppError } from "../../lib/errors.js";
 import { resolveVaultPath } from "../../lib/paths.js";
 import { type DomainContext, requireVaultPath } from "../context.js";
+import { vaultWikiConfig } from "../vault-config.js";
 
 export type WikiPaths = {
   vaultRoot: string;
@@ -51,15 +52,18 @@ export function resolveWikiPaths(
   args: ResolveWikiPathsArgs = {},
 ): WikiPaths {
   const vaultRoot = requireVaultPath(context, args.vaultPath);
-  const rootRelative = sanitizeWikiRoot(args.wikiRoot ?? context.env.KOBSIDIAN_WIKI_ROOT);
+  // Precedence: per-call argument > vault config file > env var > default.
+  const config = vaultWikiConfig(context, vaultRoot);
+  const env = context.env;
+  const rootRelative = sanitizeWikiRoot(args.wikiRoot ?? config.root ?? env.KOBSIDIAN_WIKI_ROOT);
   const rootAbsolute = resolveVaultPath(vaultRoot, rootRelative);
 
-  const sourcesDirName = context.env.KOBSIDIAN_WIKI_SOURCES_DIR;
-  const conceptsDirName = context.env.KOBSIDIAN_WIKI_CONCEPTS_DIR;
-  const entitiesDirName = context.env.KOBSIDIAN_WIKI_ENTITIES_DIR;
-  const indexFileName = context.env.KOBSIDIAN_WIKI_INDEX_FILE;
-  const logFileName = context.env.KOBSIDIAN_WIKI_LOG_FILE;
-  const schemaFileName = context.env.KOBSIDIAN_WIKI_SCHEMA_FILE;
+  const sourcesDirName = config.sourcesDir ?? env.KOBSIDIAN_WIKI_SOURCES_DIR;
+  const conceptsDirName = config.conceptsDir ?? env.KOBSIDIAN_WIKI_CONCEPTS_DIR;
+  const entitiesDirName = config.entitiesDir ?? env.KOBSIDIAN_WIKI_ENTITIES_DIR;
+  const indexFileName = config.indexFile ?? env.KOBSIDIAN_WIKI_INDEX_FILE;
+  const logFileName = config.logFile ?? env.KOBSIDIAN_WIKI_LOG_FILE;
+  const schemaFileName = config.schemaFile ?? env.KOBSIDIAN_WIKI_SCHEMA_FILE;
 
   const join = (...parts: string[]) => parts.join("/");
 

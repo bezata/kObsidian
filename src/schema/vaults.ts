@@ -107,6 +107,45 @@ export const vaultCurrentOutputSchema = z
       .describe(
         "Present when OBSIDIAN_API_URL is configured. Explains that workspace.* and commands.* tools target the vault the live Obsidian process has open, independent of the filesystem vault selected here.",
       ),
+    config: z
+      .object({
+        file: z
+          .string()
+          .describe(
+            "Vault-relative path of the per-vault config file (KOBSIDIAN_VAULT_CONFIG_FILE, default `.kobsidian.json`).",
+          ),
+        exists: z.boolean().describe("Whether that file is present in the active vault."),
+        wiki: z
+          .object({
+            root: z.string(),
+            sourcesDir: z.string(),
+            conceptsDir: z.string(),
+            entitiesDir: z.string(),
+            indexFile: z.string(),
+            logFile: z.string(),
+            schemaFile: z.string(),
+            staleDays: z.number().int(),
+            headings: z.object({
+              indexSources: z.string(),
+              indexConcepts: z.string(),
+              indexEntities: z.string(),
+              conceptPage: z.string(),
+              entityPage: z.string(),
+            }),
+          })
+          .optional()
+          .describe(
+            "Effective wiki settings after the precedence chain: per-call argument > config file > KOBSIDIAN_WIKI_* env > built-in default.",
+          ),
+        error: z
+          .string()
+          .optional()
+          .describe(
+            "Set when the config file exists but is malformed or fails validation. wiki.* tools fail with this message until it is fixed.",
+          ),
+      })
+      .nullable()
+      .describe("Effective per-vault configuration for `active`; null when no vault is active."),
   })
   .describe("Return shape of `vault.current`.");
 
