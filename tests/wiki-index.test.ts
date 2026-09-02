@@ -50,6 +50,23 @@ describe("wiki.indexRebuild", () => {
     expect(index).toContain("wiki/Entities/vannevar-bush.md");
   });
 
+  it("renders configured section headings (issue #39)", async () => {
+    const vault = await makeTempVault();
+    const context = makeContext(vault, {
+      KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING: "Fontes",
+      KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING: "Conceitos",
+      KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING: "Entidades",
+    });
+    await initWiki(context, {});
+
+    await rebuildIndex(context, { includeCounts: true });
+    const index = await readIndex(vault);
+    expect(index).toMatch(/## Fontes \(0\)/);
+    expect(index).toMatch(/## Conceitos \(0\)/);
+    expect(index).toMatch(/## Entidades \(0\)/);
+    expect(index).not.toContain("## Sources");
+  });
+
   it("shows placeholders when a category is empty", async () => {
     const vault = await makeTempVault();
     const context = makeContext(vault);

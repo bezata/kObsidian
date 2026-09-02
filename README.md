@@ -704,8 +704,17 @@ Details in [`docs/tools.md`](docs/tools.md).
 | `KOBSIDIAN_WIKI_LOG_FILE` | `log.md` | Wiki log filename. |
 | `KOBSIDIAN_WIKI_SCHEMA_FILE` | `wiki-schema.md` | Seed schema filename. |
 | `KOBSIDIAN_WIKI_STALE_DAYS` | `180` | `wiki.lint` stale-page threshold. |
+| `KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING` | `Sources` | `index.md` section that lists sources; `wiki.ingest` files new entries under it. |
+| `KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING` | `Concepts` | `index.md` section that lists concepts. |
+| `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING` | `Entities` | `index.md` section that lists entities. |
+| `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING` | `Discussion` | Concept-page heading that receives `wiki.ingest` citations / `wiki.summaryMerge` sections. |
+| `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` | `Notable Facts` | Entity-page heading that receives `wiki.ingest` citations / `wiki.summaryMerge` sections. |
 
-Every wiki tool also accepts a per-call `wikiRoot` override.
+Every wiki tool also accepts a per-call `wikiRoot` override, and `wiki.ingest`
+accepts per-call `indexHeading` / `conceptHeading` / `entityHeading` overrides
+for vaults whose pages use localized headings (e.g. `## Fontes`). When a
+target heading is missing from a page, the proposal degrades to `append` so it
+can still be applied via `notes.edit`.
 
 ---
 

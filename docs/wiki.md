@@ -197,6 +197,29 @@ accepts a per-call `wikiRoot` override:
 | `KOBSIDIAN_WIKI_LOG_FILE` | `log.md` |
 | `KOBSIDIAN_WIKI_SCHEMA_FILE` | `wiki-schema.md` |
 | `KOBSIDIAN_WIKI_STALE_DAYS` | `180` |
+| `KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING` | `Sources` |
+| `KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING` | `Concepts` |
+| `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING` | `Entities` |
+| `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING` | `Discussion` |
+| `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` | `Notable Facts` |
+
+### Localized headings
+
+`wiki.ingest` proposes cross-reference edits anchored on three headings: the
+`index.md` sources section, the concept-page discussion heading, and the
+entity-page facts heading. Vaults that use other conventions (e.g. `## Fontes`,
+`## Discussão`) set the `*_HEADING` env vars above so that proposals, page
+stubs, `wiki.init`'s seeded index, `wiki.indexRebuild`, and
+`wiki.summaryMerge`'s default heading all agree. `wiki.ingest` also accepts
+per-call `indexHeading` / `conceptHeading` / `entityHeading` overrides for
+multi-vault setups where one env configuration cannot fit every vault.
+
+When the configured heading is absent from the target page, the proposal is
+returned as `append` (with the reason explaining which heading was missing)
+instead of an `insertAfterHeading` that `notes.edit` would reject. Index
+headings rendered with `includeCounts:true` (`## Sources (12)`) are matched and
+the exact heading text is returned so it can be passed straight to
+`notes.edit` as the `anchor`.
 
 ## MCP resources + prompts (for non-Claude-Code clients)
 

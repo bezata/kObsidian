@@ -106,8 +106,13 @@ summary: ...
 - `KOBSIDIAN_WIKI_LOG_FILE`
 - `KOBSIDIAN_WIKI_SCHEMA_FILE`
 - `KOBSIDIAN_WIKI_STALE_DAYS`
+- `KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING`（デフォルト `Sources`）
+- `KOBSIDIAN_WIKI_INDEX_CONCEPTS_HEADING`（デフォルト `Concepts`）
+- `KOBSIDIAN_WIKI_INDEX_ENTITIES_HEADING`（デフォルト `Entities`）
+- `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING`（デフォルト `Discussion`）
+- `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING`（デフォルト `Notable Facts`）
 
-各 wiki tool は `wikiRoot` override も受け取ります。
+各 wiki tool は `wikiRoot` override も受け取ります。`wiki.ingest` は `indexHeading` / `conceptHeading` / `entityHeading` の per-call override も受け取ります。
 
 ## MCP resources と prompts
 

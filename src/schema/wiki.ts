@@ -133,6 +133,27 @@ export const wikiIngestArgsSchema = z
     ingestedAt: dateStringSchema
       .optional()
       .describe("YYYY-MM-DD override for the ingestion date. Defaults to today."),
+    indexHeading: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "Heading in index.md the new source entry is proposed under. Defaults to KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING, then 'Sources'.",
+      ),
+    conceptHeading: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "Heading on existing concept pages that receives the citation proposal (and the heading scaffolded into new concept stubs). Defaults to KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING, then 'Discussion'.",
+      ),
+    entityHeading: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "Heading on existing entity pages that receives the citation proposal (and the heading scaffolded into new entity stubs). Defaults to KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING, then 'Notable Facts'.",
+      ),
     wikiRoot: wikiRootOverrideSchema.describe(
       "Per-call wiki directory override (defaults to KOBSIDIAN_WIKI_ROOT or 'wiki').",
     ),
@@ -237,7 +258,7 @@ export const wikiSummaryMergeArgsSchema = z.object({
     .min(1)
     .optional()
     .describe(
-      "H2 heading text for the new section (e.g. 'Notable Facts'). Defaults to a timestamped 'Update YYYY-MM-DD' heading.",
+      "H2 heading text to insert the section under (created at the end of the page if absent). Defaults to the configured page heading: KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING ('Discussion') for concepts, KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING ('Notable Facts') for entities.",
     ),
   pageType: z
     .enum(["concept", "entity"])

@@ -1,9 +1,10 @@
 import { AppError } from "../../lib/errors.js";
-import { fileExists, writeUtf8 } from "../../lib/filesystem.js";
+import { fileExists, readUtf8, writeUtf8 } from "../../lib/filesystem.js";
 import { resolveVaultPath } from "../../lib/paths.js";
 import type { ProposedEditOperation, WikiIngestArgs } from "../../schema/wiki.js";
 import { sourceFrontmatterSchema } from "../../schema/wiki.js";
 import type { DomainContext } from "../context.js";
+import { findHeading, resolveWikiHeadings } from "./headings.js";
 import { initWiki } from "./init.js";
 import { appendLogEntry } from "./log.js";
 import { resolveWikiPaths, slugify, todayIso } from "./paths.js";
@@ -38,7 +39,12 @@ function buildSourceBody(args: {
   return sections.join("\n");
 }
 
-function buildConceptStub(name: string, sourcePage: string, updated: string): string {
+function buildConceptStub(
+  name: string,
+  sourcePage: string,
+  updated: string,
+  heading: string,
+): string {
   const frontmatter = {
     type: "concept",
     aliases: [],
@@ -47,11 +53,16 @@ function buildConceptStub(name: string, sourcePage: string, updated: string): st
     updated,
     summary: `${name} — stub created from ${sourcePage}.`,
   };
-  const body = `${conceptBodySkeleton()}\n<!-- Seeded from [[${sourcePage}]]; expand this stub when you have real content. -->\n`;
+  const body = `${conceptBodySkeleton(heading)}\n<!-- Seeded from [[${sourcePage}]]; expand this stub when you have real content. -->\n`;
   return renderWithFrontmatter(frontmatter, body);
 }
 
-function buildEntityStub(name: string, sourcePage: string, updated: string): string {
+function buildEntityStub(
+  name: string,
+  sourcePage: string,
+  updated: string,
+  heading: string,
+): string {
   const frontmatter = {
     type: "entity",
     kind: "other",
@@ -61,12 +72,46 @@ function buildEntityStub(name: string, sourcePage: string, updated: string): str
     updated,
     summary: `${name} — stub created from ${sourcePage}.`,
   };
-  const body = `${entityBodySkeleton()}\n<!-- Seeded from [[${sourcePage}]]; fill in the kind + overview. -->\n`;
+  const body = `${entityBodySkeleton(heading)}\n<!-- Seeded from [[${sourcePage}]]; fill in the kind + overview. -->\n`;
   return renderWithFrontmatter(frontmatter, body);
 }
 
 function indexEntry(sourcePage: string, title: string, summary: string): string {
   return `- [[${sourcePage}|${title}]] — ${summary}`;
+}
+
+async function readIfExists(absolute: string): Promise<string | undefined> {
+  if (!(await fileExists(absolute))) return undefined;
+  return readUtf8(absolute);
+}
+
+// Proposals must be applicable as returned: when the configured heading is
+// absent from the target page (localized vault, hand-edited page, index with
+// count suffixes), degrade to `append` instead of proposing an anchor that
+// `notes.edit` would reject.
+function citationProposal(args: {
+  path: string;
+  content: string;
+  heading: string;
+  suggestedContent: string;
+  subject: string;
+}): ProposedEdit {
+  const found = findHeading(args.content, args.heading);
+  if (found) {
+    return {
+      path: args.path,
+      operation: "insertAfterHeading",
+      heading: found,
+      suggestedContent: args.suggestedContent,
+      reason: `${args.subject} under the '${found}' heading.`,
+    };
+  }
+  return {
+    path: args.path,
+    operation: "append",
+    suggestedContent: args.suggestedContent,
+    reason: `${args.subject}. Heading '${args.heading}' was not found in the page, so append at the end instead (configure KOBSIDIAN_WIKI_*_HEADING or pass indexHeading/conceptHeading/entityHeading to target an existing heading).`,
+  };
 }
 
 async function ensureWikiInitialized(
@@ -128,33 +173,44 @@ export async function ingestSource(context: DomainContext, args: WikiIngestArgs)
     vaultPath: args.vaultPath,
   });
 
+  const headings = resolveWikiHeadings(context, args);
+  const citation = `- From [[${sourceRelative}|${args.title}]]: ${summary}`;
   const proposedEdits: ProposedEdit[] = [];
 
-  proposedEdits.push({
-    path: paths.indexRelative,
-    operation: "insertAfterHeading",
-    heading: "Sources",
-    suggestedContent: indexEntry(sourceRelative, args.title, summary),
-    reason: "Add the new source to the index under the Sources heading.",
-  });
+  proposedEdits.push(
+    citationProposal({
+      path: paths.indexRelative,
+      content: (await readIfExists(paths.indexAbsolute)) ?? "",
+      heading: headings.indexSources,
+      suggestedContent: indexEntry(sourceRelative, args.title, summary),
+      subject: "Add the new source to the index",
+    }),
+  );
 
   for (const conceptName of args.relatedConcepts ?? []) {
     const conceptSlug = slugify(conceptName);
     const conceptRelative = `${paths.conceptsRelative}/${conceptSlug}.md`;
-    const conceptAbsolute = resolveVaultPath(paths.vaultRoot, conceptRelative);
-    if (await fileExists(conceptAbsolute)) {
-      proposedEdits.push({
-        path: conceptRelative,
-        operation: "insertAfterHeading",
-        heading: "Discussion",
-        suggestedContent: `- From [[${sourceRelative}|${args.title}]]: ${summary}`,
-        reason: `Cite the new source in the existing concept page for ${conceptName}.`,
-      });
+    const existing = await readIfExists(resolveVaultPath(paths.vaultRoot, conceptRelative));
+    if (existing !== undefined) {
+      proposedEdits.push(
+        citationProposal({
+          path: conceptRelative,
+          content: existing,
+          heading: headings.concept,
+          suggestedContent: citation,
+          subject: `Cite the new source in the existing concept page for ${conceptName}`,
+        }),
+      );
     } else {
       proposedEdits.push({
         path: conceptRelative,
         operation: "createStub",
-        suggestedContent: buildConceptStub(conceptName, sourceRelative, ingestedAt),
+        suggestedContent: buildConceptStub(
+          conceptName,
+          sourceRelative,
+          ingestedAt,
+          headings.concept,
+        ),
         reason: `${conceptName} is referenced but has no concept page yet.`,
       });
     }
@@ -163,20 +219,22 @@ export async function ingestSource(context: DomainContext, args: WikiIngestArgs)
   for (const entityName of args.relatedEntities ?? []) {
     const entitySlug = slugify(entityName);
     const entityRelative = `${paths.entitiesRelative}/${entitySlug}.md`;
-    const entityAbsolute = resolveVaultPath(paths.vaultRoot, entityRelative);
-    if (await fileExists(entityAbsolute)) {
-      proposedEdits.push({
-        path: entityRelative,
-        operation: "insertAfterHeading",
-        heading: "Notable Facts",
-        suggestedContent: `- From [[${sourceRelative}|${args.title}]]: ${summary}`,
-        reason: `Cite the new source in the existing entity page for ${entityName}.`,
-      });
+    const existing = await readIfExists(resolveVaultPath(paths.vaultRoot, entityRelative));
+    if (existing !== undefined) {
+      proposedEdits.push(
+        citationProposal({
+          path: entityRelative,
+          content: existing,
+          heading: headings.entity,
+          suggestedContent: citation,
+          subject: `Cite the new source in the existing entity page for ${entityName}`,
+        }),
+      );
     } else {
       proposedEdits.push({
         path: entityRelative,
         operation: "createStub",
-        suggestedContent: buildEntityStub(entityName, sourceRelative, ingestedAt),
+        suggestedContent: buildEntityStub(entityName, sourceRelative, ingestedAt, headings.entity),
         reason: `${entityName} is referenced but has no entity page yet.`,
       });
     }

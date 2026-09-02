@@ -29,28 +29,16 @@ const SOURCE_SKELETON = `## TL;DR
 ## Notes
 `;
 
-const CONCEPT_SKELETON = `## Definition
-
-## Discussion
-
-## Related
-`;
-
-const ENTITY_SKELETON = `## Overview
-
-## Notable Facts
-
-## Related
-`;
-
 export function sourceBodySkeleton(): string {
   return SOURCE_SKELETON;
 }
 
-export function conceptBodySkeleton(): string {
-  return CONCEPT_SKELETON;
+// The middle heading is where wiki.ingest / wiki.summaryMerge file citations,
+// so stubs must be scaffolded with whatever heading the vault has configured.
+export function conceptBodySkeleton(discussionHeading = "Discussion"): string {
+  return `## Definition\n\n## ${discussionHeading}\n\n## Related\n`;
 }
 
-export function entityBodySkeleton(): string {
-  return ENTITY_SKELETON;
+export function entityBodySkeleton(factsHeading = "Notable Facts"): string {
+  return `## Overview\n\n## ${factsHeading}\n\n## Related\n`;
 }

@@ -50,7 +50,7 @@ export const wikiTools: ToolDefinition[] = [
     name: "wiki.ingest",
     title: "Ingest Source",
     description:
-      "File one new source into the wiki: writes `Sources/<slug>.md` with canonical frontmatter, appends an `ingest` entry to `log.md`, and returns a `proposedEdits` array the agent applies via existing `notes.*` tools (`createStub` → `notes.create`; `insertAfterHeading` / `append` → `notes.edit` with the matching `mode`). Cross-reference writes are deliberately NOT applied here so every edit shows up in the transcript. Provide either `sourcePath` (existing vault note) OR `content` (inline markdown) — never both. Use `wiki.summaryMerge` instead when you want to file a follow-up section into an EXISTING concept/entity page; use `wiki.query` to look something up without writing.",
+      "File one new source into the wiki: writes `Sources/<slug>.md` with canonical frontmatter, appends an `ingest` entry to `log.md`, and returns a `proposedEdits` array the agent applies via existing `notes.*` tools (`createStub` → `notes.create`; `insertAfterHeading` / `append` → `notes.edit` with the matching `mode`). Cross-reference writes are deliberately NOT applied here so every edit shows up in the transcript. Proposals target the headings configured via `KOBSIDIAN_WIKI_INDEX_SOURCES_HEADING` / `KOBSIDIAN_WIKI_CONCEPT_PAGE_HEADING` / `KOBSIDIAN_WIKI_ENTITY_PAGE_HEADING` (defaults `Sources` / `Discussion` / `Notable Facts`), overridable per call with `indexHeading` / `conceptHeading` / `entityHeading`; when the heading is missing from the target page the proposal degrades to `append` so it can always be applied. Provide either `sourcePath` (existing vault note) OR `content` (inline markdown) — never both. Use `wiki.summaryMerge` instead when you want to file a follow-up section into an EXISTING concept/entity page; use `wiki.query` to look something up without writing.",
     inputSchema: wikiIngestArgsSchema,
     outputSchema: mutationResultSchema,
     inputExamples: [
@@ -74,6 +74,17 @@ export const wikiTools: ToolDefinition[] = [
           sourcePath: "drafts/adr-004.md",
           sourceType: "note",
           tags: ["adr", "architecture"],
+        },
+      },
+      {
+        description: "Ingest into a vault whose pages use localized headings.",
+        input: {
+          title: "Manual de Estilo",
+          content: "# Manual de Estilo\n\nRegras de escrita …",
+          relatedConcepts: ["Estilo"],
+          indexHeading: "Fontes",
+          conceptHeading: "Discussão",
+          entityHeading: "Fatos Notáveis",
         },
       },
     ],

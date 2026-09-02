@@ -1,7 +1,12 @@
+import { AppError } from "../lib/errors.js";
 import { readUtf8, writeUtf8 } from "../lib/filesystem.js";
 import { parseFrontmatter, stringifyFrontmatter } from "../lib/frontmatter.js";
 import { resolveVaultPath } from "../lib/paths.js";
 import { type DomainContext, requireVaultPath } from "./context.js";
+
+export function headingPattern(heading: string): RegExp {
+  return new RegExp(`^#{1,6}\\s+${escapeRegExp(heading)}\\s*$`);
+}
 
 export async function insertAfterHeading(
   context: DomainContext,
@@ -11,11 +16,13 @@ export async function insertAfterHeading(
   const absolutePath = resolveVaultPath(vaultRoot, args.filePath);
   const original = await readUtf8(absolutePath);
   const lines = original.split(/\r?\n/);
-  const index = lines.findIndex((line) =>
-    new RegExp(`^#{1,6}\\s+${escapeRegExp(args.heading)}\\s*$`).test(line),
-  );
+  const pattern = headingPattern(args.heading);
+  const index = lines.findIndex((line) => pattern.test(line));
   if (index < 0) {
-    return { changed: false, target: args.filePath, error: `Heading '${args.heading}' not found` };
+    throw new AppError(
+      "not_found",
+      `Heading '${args.heading}' not found in ${args.filePath}. Pass the exact heading text (without leading #s), or use mode:'append'.`,
+    );
   }
   lines.splice(index + 1, 0, args.content);
   await writeUtf8(absolutePath, `${lines.join("\n")}${original.endsWith("\n") ? "\n" : ""}`);
@@ -39,7 +46,7 @@ export async function insertAfterBlock(
     new RegExp(`\\s${escapeRegExp(blockId)}\\s*$`).test(line),
   );
   if (index < 0) {
-    return { changed: false, target: args.filePath, error: `Block '${blockId}' not found` };
+    throw new AppError("not_found", `Block '${blockId}' not found in ${args.filePath}.`);
   }
   lines.splice(index + 1, 0, args.content);
   await writeUtf8(absolutePath, `${lines.join("\n")}${original.endsWith("\n") ? "\n" : ""}`);

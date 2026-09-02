@@ -46,8 +46,10 @@ Never commit `.env` files or real API keys.
 - MCP registration and structured output validation through in-memory transports.
 - Real stdio and Streamable HTTP JSON round trips, including newlines, literal escape text, tabs, quotes, backslashes, and Unicode.
 - JSON Schema 2020-12 input/output dialect checks for every tool over both real
-  stdio and stateless Streamable HTTP, including object-rooted discriminated
-  unions.
+  stdio and stateless Streamable HTTP, plus `tests/tool-schemas.test.ts`, which
+  asserts no tool advertises root-level `oneOf`/`anyOf`/`allOf` and that every
+  discriminated-union tool exposes its discriminant as an `enum` in
+  `properties`.
 - Hono Streamable HTTP compliance coverage.
 - Source-preserving Markdown block updates.
 - Local REST API-dependent tools as opt-in live checks.
