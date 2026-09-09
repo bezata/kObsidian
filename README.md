@@ -50,6 +50,12 @@ Docs: [简体中文](docs/i18n/zh-CN/README.md) / [日本語](docs/i18n/ja/READM
 
 ---
 
+## New in v0.3.7
+
+Configure each vault independently with `.kobsidian.json`: customize wiki folders, filenames, headings, and the stale-page threshold without sharing one configuration across every vault. `notes.edit` heading inserts also preserve paragraph spacing and join existing lists cleanly.
+
+[Configuration example and upgrade notes](docs/README.md#per-vault-configuration-v037).
+
 ## Why kObsidian
 
 - **Filesystem-first.** Operates on your vault directly. Obsidian doesn't need to be running for 55+ of the 66 tools.
@@ -57,6 +63,7 @@ Docs: [简体中文](docs/i18n/zh-CN/README.md) / [日本語](docs/i18n/ja/READM
 - **Multi-vault `vault.*` (v0.3.0).** The LLM can `vault.list` your known Obsidian vaults (discovered from Obsidian's own registry or `OBSIDIAN_VAULT_<NAME>` env vars) and `vault.select` between them for the session. Fully backwards compatible: `OBSIDIAN_VAULT_PATH` stays the default and per-call `vaultPath` arguments always win.
 - **LLM-Wiki orchestration** — a `wiki.*` namespace that turns your vault into a compounding knowledge base: ingest sources, auto-update an index + greppable log, lint for orphans / broken links / stale pages. Agent applies cross-refs via a `proposedEdits` contract so every write is visible in the transcript.
 - **Both transports.** Classic stdio for local MCP clients and Streamable HTTP (Hono) for remote, with CORS preflight, `MCP-Protocol-Version` handling, origin 403, and optional bearer auth — all per the 2025-11-25 spec.
+- **Claude Code schema compatibility (v0.3.5+, refined in v0.3.6).** Tools advertise JSON Schema 2020-12 over both stdio and stateless Streamable HTTP. Union-shaped tools expose their fields and selectors to the client, while Zod still validates each call and structured output. See [compatibility details](docs/README.md#mcp-client-compatibility).
 - **Ships everywhere.** npm (`npx -y kobsidian-mcp`), cross-platform `.mcpb` bundles for Claude Desktop drag-and-drop, a `smithery.yaml` for Smithery, and a `server.json` for the MCP Registry. Each `.mcpb` release asset is VirusTotal-scanned with links appended to the release body.
 
 ---

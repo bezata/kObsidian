@@ -2,6 +2,12 @@
 
 kObsidian은 Obsidian vault용 filesystem-first MCP server이며, 그 위에 LLM Wiki layer를 제공합니다. 사용자는 저장할 source를 고르고, LLM은 정리, 색인, 상호 참조, 유지보수를 담당합니다.
 
+## v0.3.7의 새 기능
+
+vault 루트의 `.kobsidian.json`으로 wiki 폴더, 파일명, 제목, 오래된 페이지 판단 기준 일수를 vault마다 따로 설정할 수 있습니다. `notes.edit`의 제목 기준 삽입도 문단 간격을 유지하고 기존 목록에 자연스럽게 연결하도록 개선했습니다.
+
+[설정 예제와 업그레이드 안내](README.md#per-vault-configuration-v037)를 참고하세요.
+
 ## kObsidian을 쓰는 이유
 
 - **Filesystem-first**: 대부분의 도구는 vault file을 직접 읽고 쓰며 Obsidian 실행이 필요 없습니다.
@@ -9,6 +15,7 @@ kObsidian은 Obsidian vault용 filesystem-first MCP server이며, 그 위에 LLM
 - **다중 vault**: `vault.list`, `vault.current`, `vault.select`, `vault.reset`으로 세션 중 vault를 전환합니다.
 - **LLM Wiki**: `wiki.*`로 init, ingest, query, lint, merge, index rebuild를 수행합니다.
 - **두 transport**: stdio와 Hono Streamable HTTP.
+- **Claude Code schema 호환성(v0.3.5 도입, v0.3.6 개선)**: stdio와 무상태 Streamable HTTP 모두 JSON Schema 2020-12를 사용합니다. 유니온 타입 도구도 필드와 선택 항목을 클라이언트에 공개하며, 각 호출과 구조화된 출력은 계속 Zod로 검증합니다. [호환성 안내](README.md#mcp-클라이언트-호환성)를 참고하세요.
 - **배포**: npm, `.mcpb`, Smithery, MCP Registry 설정을 제공합니다.
 
 ## Install

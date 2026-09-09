@@ -2,6 +2,12 @@
 
 kObsidian 是面向 Obsidian vault 的 filesystem-first MCP server，并在其上提供 LLM Wiki 层。你负责选择值得保存的 sources，LLM 负责整理、索引、交叉引用和维护。
 
+## v0.3.7 新功能
+
+通过每个 vault 根目录中的 `.kobsidian.json`，独立配置 wiki 文件夹、文件名、标题和过期天数，不同 vault 无需共用一套配置。`notes.edit` 按标题插入时也会保留段落间距，并正确衔接已有列表。
+
+[配置示例与升级说明](README.md#per-vault-configuration-v037)。
+
 ## 为什么选择 kObsidian
 
 - **Filesystem-first**：大多数工具直接读写 vault 文件，不要求 Obsidian 正在运行。
@@ -9,6 +15,7 @@ kObsidian 是面向 Obsidian vault 的 filesystem-first MCP server，并在其�
 - **多 vault**：`vault.list`、`vault.current`、`vault.select`、`vault.reset` 支持会话内切换 vault。
 - **LLM Wiki**：`wiki.*` 命名空间可初始化 wiki、ingest sources、query、lint、merge summary、rebuild index。
 - **双 transport**：本地 stdio 与 Hono Streamable HTTP。
+- **Claude Code schema 兼容性（v0.3.5 起，v0.3.6 完善）**：stdio 和无状态 Streamable HTTP 均使用 JSON Schema 2020-12。联合类型工具向客户端公开字段和选择器，Zod 仍会验证每次调用和结构化输出。详见 [兼容性说明](README.md#mcp-客户端兼容性)。
 - **可分发**：npm、`.mcpb`、Smithery、MCP Registry 配置都包含在项目中。
 
 ## 安装
